@@ -1,0 +1,39 @@
+\documentclass[11pt, twocolumn, a4paper]{report}
+
+\newcommand{\reporttitle}{Quantum programming}
+\newcommand{\reportauthor}{Tristan \textsc{Nemoz}}
+\newcommand{\reporttype}{Individual Study Option}
+\newcommand{\reportemail}{tristan.nemoz19@imperial.ac.uk}
+\newcommand{\cid}{01811909}
+\date{May 6, 2020}
+
+\input{includes} % various packages needed for maths etc.
+
+\begin{document}
+	\input{titlepage.tex}        
+        We need to take into account the case \(a_i=b\). If \(a_i=\frac12\), result qubit is \(|1\rangle\), OK. Write the proof to ensure this is correct also for corner cases.
+        
+        \begin{quantikz}
+        \lstick{\ket{a_{i,j}}} & \qw & \ctrl{2} & \qw & \qw & \qw & \qw & \qw & \ctrl{2} & \qw\rstick{\ket{a_{i,j}}}\\
+        \lstick{Result \ket{0}} & \qw & \qw & \qw & \qw & \qw & \gate{X^{b_j}} & \qw & \qw & \qw\\
+        \lstick{Equal Ancilla \ket{0}} & \gate{X^{b_j}} & \gate{X} & \octrl{1} & \ctrl{1} & \qw & \ctrl{-1} & \gate{X^{b_j}} & \gate{X} & \qw\rstick{\ket{0}}\\
+        \lstick{Result found Ancilla \ket{0}} & \octrl{-1} & \octrl{-1} & \ctrl{1} & \gate{X}  & \qw  & \qw   & \qw & \qw &\qw\\
+        \lstick{Result applied Ancilla \ket{0}} & \qw & \qw & \gate{X} & \qw & \qw & \qw & \octrl{-2} & \octrl{-2} & \qw \\
+        \end{quantikz}
+        
+        Global QSVET:
+        
+        \begin{quantikz}
+        \lstick{$\ket{0}^{\otimes\lceil\log(m)\rceil}$} & \qw & \gate[wires=2]{Q} & \gate[wires=3]{\text{QPE}} & \qw & \gate[wires=3]{\text{QPE}^\dagger} & \gate[wires=2]{Q^\dagger} &\qw & \qw\rstick{\ket{0}}\\
+        \lstick{$\ket{0}^{\otimes\lceil\log(n)\rceil}$} & \gate{\text{Loading}} & & & \qw & & & \qw & \qw\\
+        \lstick{$\ket{0}^{\otimes\left\lceil\log\left(\frac{\|A\|_F}{\kappa\,\sigma}\right)\right\rceil}$} & \qw & \qw & & \gate[wires=5]{\text{Threshold}} & & \qw & \qw & \qw\rstick{\ket{0}}\\
+        \lstick{Result Threshold \ket{0}} & \qw & \qw & \qw & & \qw & \qw & \meter{} & \qw\\
+        \lstick{Equal Ancilla \ket{0}} & \qw & \qw & \qw & & \qw & \qw & \qw & \qw\rstick{\ket{0}}\\
+        \lstick{Result found Ancilla \ket{0}} & \qw & \qw & \qw & & \qw & \qw & \qw & \qw\rstick{\ket{1}}\\
+        \lstick{Result applied Ancilla \ket{0}} & \qw & \qw & \qw & & \qw & \qw & \qw & \qw\rstick{\ket{1}}\\
+       \end{quantikz}
+
+	\nocite{*}
+	\bibliographystyle{plain}
+    \bibliography{main}
+\end{document}
