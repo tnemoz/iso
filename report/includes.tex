@@ -1,12 +1,33 @@
+\usepackage{arxiv}
+
 \usepackage[english]{babel}
 \usepackage[T1]{fontenc}
 \usepackage[utf8]{inputenc}
 
-\usepackage[a4paper,hmargin=2cm,vmargin=2cm]{geometry}
+\usepackage{csquotes}
+
+\usepackage[
+    backend=bibtex,
+    citestyle=numeric-comp,
+    sorting=nty
+]{biblatex}
+
+\addbibresource{main.bib}
+
+\renewbibmacro*{name:andothers}{% Based on name:andothers from biblatex.def
+  \ifboolexpr{
+    test {\ifnumequal{\value{listcount}}{\value{liststop}}}
+    and
+    test \ifmorenames
+  }
+    {\ifnumgreater{\value{liststop}}{1}
+       {\finalandcomma}
+       {}%
+     \andothersdelim\bibstring[\emph]{andothers}}
+    {}}
+
 \usepackage{graphicx}
 
-
-\usepackage{url}
 \usepackage{hyperref} % provide links in pdf
 \hypersetup{
   pdftitle={\reporttitle},
@@ -21,6 +42,15 @@
     linkcolor=black,%
     urlcolor=black
 }
+\usepackage{url}
 
 \usepackage{tikz}
 \usetikzlibrary{quantikz}
+
+\usepackage{stmaryrd}
+\usepackage{amssymb}
+\usepackage[amsthm,thmmarks]{ntheorem}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{definition}{Definition}[section]
+
+\newcommand{\X}{\mathbf{X}}
