@@ -17,6 +17,8 @@
 	\maketitle
     \begin{abstract}
         In this work, we design a generic quantum circuit to implement a recommendation system following the algorithm of \citeauthor{QRS}. This algorithm takes as input a \(m\times n\) binary matrix which has a good rank-\(k\) approximation and returns a product recommendation for an user in time \(O(\log(k)\,\log(m\,n))\).
+        
+        We discuss the limitations of implementing this algorithm on a real quantum computer and the differences between the high-level description of the algorithm and its low-level implementation. In particular, our implementation's complexity matches the original algorithm' one of \(O(\polylog(m\,n)\,\poly(k))\), but succeeds with only a probability of \(1-\frac{1}{\log(m\,n)}\), where the original algorithm succeeds with probability \(1 - \frac{1}{\poly(m\,n)}\).
     \end{abstract}
     
     \section{Introduction}
@@ -27,8 +29,27 @@
         HHL algorithm was one of the first algorithms to use Quantum Computing for solving a Machine Learning problem. Other followed and papers have continued to be published to apply Quantum Computing to specific Machine Learning tasks like Deep Convolutional Neural Networks \cite{QCNN}.
         
         In this context, \citeauthor{QRS} proposed in 2016 a quantum algorithm for a recommendation system which provided a solution with an exponential speed-up gain in time complexity regarding classical solutions at that time.
+        
+        We present a generic quantum circuit for implementing this algorithm so that it can be easily reproducible using any framework, given an implementation of a Quantum RAM, that is, a general circuit made of elementary gates that matches the original algorithm. Because of the limitations of the quantum hardware, which are discussed in \autoref{subsec:Hardware}, only a limited set of gates can be used. Furthermore, some operations used in the original algorithm are not currently possible to implement on a quantum computer. For such problems, we present workarounds that leave the complexity untouched but cut the probability of success of the algorithm.
+        
+        Hence, our goal is to present the differences between a theoretic implementation of the algorithm of \citeauthor{QRS} and a currently real one.
+        
+        This paper is organized as follows:
+        
+        \begin{enumerate}
+         \item In \autoref{sec:QC}, we provide the reader with basics of Quantum Computing, so that this document is \textit{mostly} self-contained.
+         \item In \autoref{sec:QRS}, we provide a high-level description of the algorithm of \citeauthor{QRS}, as well as a formal mathematical definition of the problem. We also present in this section the challenges to be tackled.
+         \item In \autoref{sec:QCircuit}, we present our solutions to cope with these problems when implementing the algorithm on a real quantum computer.
+        \end{enumerate}
+
     \section{Quantum computing preliminaries}
+        \label{sec:QC}
+        In this section, we ought to present the fundamentals of Quantum Computing that will be used throughout this document in \autoref{subsec:QCT}. Note that only the notions that will be used in the actual implementation of the algorithm will be presented.
+        
+        Once the formalism of Quantum Computing presented, we discuss the limitations enforced by the current quantum computers in \autoref{subsec:Hardware}.
         \subsection{Quantum computing theory}
+            \label{subsec:QCT}
+            The principle of Quantum Computing is to design a formalism so that one can encode information as binary words, just like in classical computing. Linking this formalism to the physics principles is a problem we will not discuss here, but whose history is summarized in \cite{HistoryEquivalence}.
             \subsubsection{Quantum computing objects}
                 Quantum computing operates with qubits, which are unitary vectors of \(\mathbf{C}^2\). Such a vector represent a quantum particle state which we denote \(\ket{x}\). We define \(\ket{0}\) and \(\ket{1}\) to be the vectors of the computational basis of \(\mathbf{C}^2\) seen as a \(\mathbf{C}\)-vector field. As such, given \(\ket{x}\in\mathbf{C}^2\) we can write:
                 
@@ -52,11 +73,15 @@
                 
                 \[\exp\left(-\frac{\mathrm{i}}{\hbar}\,\mathbf{H}\,t\right)^\dagger\,\exp\left(-\frac{\mathrm{i}}{\hbar}\,\mathbf{H}\,t\right) = \mathbf{I}\,.\]
                 
-                As a consequence, every operation \(\mathbf{U}\) performed on a quantum state \(\ket{x}\) must be unitary. Reciprocally, every unitary matrix \(\mathbf{U}\) can be applied to a quantum state \(\ket{x}\). Such an operation is called a quantum gate.
+                As a consequence, every operation \(\mathbf{U}\) performed on a quantum state \(\ket{x}\) must be unitary. Reciprocally, every unitary matrix \(\mathbf{U}\) can be applied to a quantum state \(\ket{x}\). Such an operation is called a quantum gate. 
                 
                 A quantum algorithm operates with several qubits. Let \ket{\varphi} and \ket{\psi} be two qubits. Then the quantum state containing \ket{\varphi} in a first register and \ket{\psi} in a second register is given by the tensor product \(\ket{\varphi}\otimes\ket{\psi}\) of \ket{\varphi} and \ket{psi}. An usual convention is to omit the symbol of the tensor product. Hence, such a state would be noted \(\ket{\varphi}\,\ket{\psi}\), or even \ket{\phi\psi}. Then, if a gate \(\mathbf{U}_1\) is applied on \ket{\varphi}, and a gate \(\mathbf{U}_2\) is applied on \ket{\psi}, then the resulting quantum state is given by:
                 
                 \[\left(\mathbf{U}_1\otimes\mathbf{U}_2\right)\,\left(\ket{\varphi}\otimes\ket{\psi}\right)\,.\]
+                
+                To make an analogy with classical computing, a quantum algorithm encodes information as a tensor product of several qubits, apply one or more quantum gates to them, and then read out the result. Both the input and the output of a quantum algorithm is a tensor product of qubits, each possibly in a superposed state.
+                
+                The big difference with classical computing however, is that every operation performed on a quantum state is reversible, since every operation is represented by a unitary, hence inversible, matrix. The only exception to this rule is the reading operation, also called the Measurement operation, described in \autoref{subsubsec:Measurement}.
             \subsubsection{Quantum circuit and quantum gates}
                 Let \ket{x} and \ket{y} be two qubits and let \(\mathbf{U}_1\), \(\mathbf{U}_2\) and \(\mathbf{U}_3\) be three quantum gates that can be applied on single qubits. Applying \(\mathbf{U}_1\) followed by \(\mathbf{U}_2\) on \ket{x} while applying \(\mathbf{U}_3\) to \ket{y} is graphically represented as shown below:
                 
@@ -64,7 +89,7 @@
                     \centering
                         \begin{quantikz}
                             \lstick{\ket{x}} & \gate{\mathbf{U}_1} & \gate{\mathbf{U}_2} & \qw\\
-                            \lstick{\ket{y}} & \gate{\mathbf{U}_2} & \qw & \qw
+                            \lstick{\ket{y}} & \gate{\mathbf{U}_3} & \qw & \qw
                         \end{quantikz}
                     \caption{An example of a quantum circuit}
                 \end{figure}
@@ -74,13 +99,13 @@
                 \begin{figure}[ht]
                     \centering
                         \begin{quantikz}
-                            \lstick{\ket{x}} & \gate[wires=2]{\mathbf{U}_1\otimes\mathbf{U}_2} & \gate{\mathbf{U}_2} & \qw\\
+                            \lstick{\ket{x}} & \gate[wires=2]{\mathbf{U}_1\otimes\mathbf{U}_3} & \gate{\mathbf{U}_2} & \qw\\
                             \lstick{\ket{y}} &  & \qw & \qw
                         \end{quantikz}
                     \caption{An example of a quantum circuit with a gate applied on several qubits}
                 \end{figure}
                 
-                It is possible to apply a gate on a given qubit \ket{y} only if another qubit is in the state \ket{1}. Let us take the following circuit as an example:
+                It is possible to apply a gate on a given qubit \ket{y} only if another qubit is in the state \ket{1}. Such a gate is called a controlled gate. Let us take the following circuit as an example:
                 
                 \begin{figure}[ht]
                     \centering
@@ -117,7 +142,8 @@
                         \end{quantikz}
                     \caption{An example of a quantum circuit with a gate conditioned on the state \ket{0}}
                 \end{figure}
-            \subsubsection{Measurement and entanglement}
+            \subsubsection{Measurement}
+                \label{subsubsec:Measurement}
                 Let \ket{x} be a quantum state of \(n\) qubits. We denote by \ket{k} the \(k\)-th vector of the computational basis of \(\mathbf{C}^{2^n}\). The notation \ket{k} will always be used in a non-ambiguous way. Hence, it will only be used to write a quantum state whose number of qubits is known. As such, we have:
                 
                 \[\ket{x} = \sum_{k=1}^n\alpha_k\,\ket{k}\]
@@ -132,7 +158,9 @@
                     \caption{Representation of a measurement}
                 \end{figure}
                 
-                Measuring is usually the last thing performed in a quntum algorithm, since it is the only way to go from a quantum state to a classical one. But there is a case that we need to consider: whenever a state is entangled. A state \ket{x} is entangled whenever it is not possible to find \(n\) qubits \ket{q_1}, \ket{q_2}, \(\cdots\), \ket{q_n} such that:
+                Measuring is usually the last thing performed in a quantum algorithm, since it is the only way to go from a quantum state to a classical one. However, a quantum algorithm designed to be used a part of another, bigger, quantum algorithm, does not necessarily perform a measurement. The HHL algorithm \cite{HHL} is often used as such.
+            \subsubsection{Entanglement}
+                A state \ket{x} is entangled whenever it is not possible to find \(n\) qubits \ket{q_1}, \ket{q_2}, \(\cdots\), \ket{q_n} such that:
                 
                 \[\ket{x}=\bigotimes_{k=1}^n\ket{q_k}\,.\]
                 
@@ -153,11 +181,15 @@
                 
                 When measuring \ket{\varphi}, we will obtain \ket{0}  with probability \(\frac12\) or \ket{1} also with probability \(\frac12\). But even though we only measured the first qubit, we forced \ket{\varphi} to be either in the state \ket{00} or \ket{11} after the measurement. Hence, measuring the first qubit affected somehow the second qubit.
                 
-                For this reason, it is crucial to ensure when measuring a quantum state that it is not entangled.
+                Often, efficient quantum algorithms make use of entangled state. For this reason, it is crucial to ensure when measuring a quantum state that it is not entangled.
         \subsection{Quantum hardware considerations}
+            \label{subsec:Hardware}
+            %TODO: Limitations. Gap between theoretic implementation and real one.
             
     \section{A quantum recommendation system}
+        \label{sec:QRS}
     \section{Designing a quantum circuit for a recommendation system}
+        \label{sec:QCircuit}
         \subsection{Loading from QRAM}
         \subsection{Applying the Quantum Phase Estimation algorithm}
             Now that the state \ket{x} has been loaded from QRAM, we are to append a quantum register of size \(\lceil\log(n)\rceil\) before the quantum register in which \ket{x} has been loaded and to apply a unitary \(\mathbf{Q}\) to get the state:
