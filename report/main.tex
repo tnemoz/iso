@@ -61,6 +61,10 @@
                 
                 \[\mathbf{A}^\dagger \overset{\text{\tiny{def}}}{=} \overline{\mathbf{A}^\top} = \overline{\mathbf{A}}^\top\,.\]
                 
+                Similarly, we define \bra{x} to be:
+                
+                \[\bra{x}\overset{\text{\tiny{def}}}{=}\ket{x}^\dagger\,.\]
+                
                 Each quantum state \(\ket{x}\) evolution satisfies Schrödinger's equation:
                 
                 \[\mathrm{i}\,\hbar\,\frac{\partial}{\partial t}\ket{x} = \mathbf{H}\,\ket{x}\]
@@ -82,7 +86,7 @@
                 To make an analogy with classical computing, a quantum algorithm encodes information as a tensor product of several qubits, apply one or more quantum gates to them, and then read out the result. Both the input and the output of a quantum algorithm is a tensor product of qubits, each possibly in a superposed state.
                 
                 The big difference with classical computing however, is that every operation performed on a quantum state is reversible, since every operation is represented by a unitary, hence inversible, matrix. The only exception to this rule is the reading operation, also called the Measurement operation, described in \autoref{subsubsec:Measurement}.
-            \subsubsection{Quantum circuit and quantum gates}
+            \subsubsection{Quantum circuit}
                 Let \ket{x} and \ket{y} be two qubits and let \(\mathbf{U}_1\), \(\mathbf{U}_2\) and \(\mathbf{U}_3\) be three quantum gates that can be applied on single qubits. Applying \(\mathbf{U}_1\) followed by \(\mathbf{U}_2\) on \ket{x} while applying \(\mathbf{U}_3\) to \ket{y} is graphically represented as shown below:
                 
                 \begin{figure}[ht]
@@ -116,7 +120,7 @@
                     \caption{An example of a quantum circuit with a conditoned gate}
                 \end{figure}
                 
-                Here, \(\X\) is the \textsc{Pauli} \(\X\)-gate, which will be extensively used throughout this document:
+                Here, \(\X\) is the Pauli \(\X\)-gate, which will be extensively used throughout this document:
                 
                 \[\X\overset{\text{\tiny{def}}}{=}\begin{pmatrix}0 & 1\\ 1 & 0\end{pmatrix}\,.\]
                 
@@ -175,19 +179,110 @@
                     \caption{A quantum circuit for a demonstration of the impact of entanglement on measuring}
                 \end{figure}
                 
-                Here, \(\mathbf{H}\) is the \textsc{Hadamard} gate, which maps \ket{0} to \(\frac{1}{\sqrt{2}}\,(\ket{0} + \ket{1})\). Hence, just before the measurement, the quantum state is given by:
+                Here, \(\mathbf{H}\) is the Hadamard gate, which maps \ket{0} to \(\frac{1}{\sqrt{2}}\,(\ket{0} + \ket{1})\). Hence, just before the measurement, the quantum state is given by:
                 
                 \[\ket{\varphi}=\frac{1}{\sqrt{2}}\,\ket{00} + \frac{1}{\sqrt{2}}\,\ket{11}\,.\]
                 
                 When measuring \ket{\varphi}, we will obtain \ket{0}  with probability \(\frac12\) or \ket{1} also with probability \(\frac12\). But even though we only measured the first qubit, we forced \ket{\varphi} to be either in the state \ket{00} or \ket{11} after the measurement. Hence, measuring the first qubit affected somehow the second qubit.
                 
                 Often, efficient quantum algorithms make use of entangled state. For this reason, it is crucial to ensure when measuring a quantum state that it is not entangled.
+            \subsubsection{Quantum gates and algorithms}
+                Since a quantum algorithm is actually applications of quantum gates, we can show that it is of course also unitary. For this reason, we often do not make the difference between a quantum gate and a quantum algorithm, especially when no measurement is performed.
+                
+                We need to introduce some gates that will be used in our implementation and provide their complexity. We define a set of elementary gates:
+                
+                \[\begin{array}{ccccccc}\X\overset{\text{\tiny{def}}}{=}\begin{pmatrix}0 & 1\\1 & 0\end{pmatrix} & \mathbf{Y}\overset{\text{\tiny{def}}}{=}\begin{pmatrix}0&\mathrm{-i}\\\mathrm{i} & 0\end{pmatrix}&\mathrm{Z}\overset{\text{\tiny{def}}}{=}\begin{pmatrix}1 & 0\\0 & -1\end{pmatrix}&\mathrm{H}\overset{\text{\tiny{def}}}{=}\frac{1}{\sqrt{2}}\begin{pmatrix}1 & 1\\1 & -1\end{pmatrix}&\mathrm{R}_{\theta}\overset{\text{\tiny{def}}}{=}\begin{pmatrix}1 & 0\\0 & \mathrm{e}^{\mathrm{i}\,\theta}\end{pmatrix}&\mathrm{I}\overset{\text{\tiny{def}}}{=}\begin{pmatrix}1 & 0\\0 & 1\end{pmatrix}\end{array}\]
+                
+                with \(\theta\in\mathbf{R}\). For every matrix \(\mathbf{U}\) in this elementary set, we also define its controlled equivalent \(\mathbf{CU}\) as elementary. Note that this does not include \(\mathrm{CU}\) itself: a gate that is controlled on more than 2 qubits must be implemented using gate controlled on a single qubit. Finally, we add one more elementary gate (without adding its controlled equivalent), which is the Toffoli gate \(\mathbf{CCX}\), also known as the CCNOT gate. Its circuit representation is:
+                
+                \begin{figure}[ht]
+                    \centering
+                    \begin{quantikz}
+                        \qw & \ctrl{2} & \qw\\
+                        \qw & \ctrl{1} & \qw\\
+                        \qw & \gate{\X} & \qw
+                    \end{quantikz}
+                    \caption{The Toffoli gate}
+                \end{figure}
+                
+                Hence, the set \(\mathcal{E}\) os elementary gates is:
+                
+                \[\mathcal{E} \overset{\text{\tiny{def}}}{=} \{\mathbf{X}, \mathbf{Y}, \mathbf{Z}, \mathbf{CX}, \mathbf{CZ}, \mathbf{CCX}\}\,.\]
+                
+                \begin{assumption}
+                    \label{assumption:Elementary}
+                    Every gate of \(\mathcal{E}\) can be implemented in \(O(1)\).
+                \end{assumption}
+                
+                Hence, we can define the complexity of a gate by decomposing it in a succession of elementary gates.
+                
+                \begin{definition}[SWAP gate]
+                    The swap gate is used to exchange the value of two qubits. It is implemented as follows:
+                    
+                    \begin{figure}[ht]
+                        \centering
+                        \begin{quantikz}
+                            \qw & \swap{1} & \qw &\ghost{\X}\\
+                            \qw & \targX{}  & \qw &\ghost{\X}
+                        \end{quantikz}\(\equiv\)
+                        \begin{quantikz}
+                            \qw & \gate{\X} & \ctrl{1} & \gate{\X} & \qw\\
+                            \qw & \ctrl{-1} & \gate{\X} & \ctrl{-1} & \qw
+                        \end{quantikz}
+                        \caption{The SWAP gate}
+                    \end{figure}
+                    Hence, the time complexity of a SWAP gate is also \(O(1)\).
+                \end{definition}
+                
+                \begin{definition}[Quantum Fourier Transform]
+                    The Quantum Fourier Transform gate \(\mathbf{F}\) matches the classical definition of the Fourier transform. Hence, we have, for \(n\) qubits:
+                    
+                    \[\forall j\in\left\llbracket0\,;\,2^n-1\right\rrbracket,\mathbf{F}\,\ket{j} = \frac{1}{\sqrt{2^n}}\,\sum_{k=0}^{2^n-1}\mathrm{e}^{\frac{2\,\mathrm{i}\,\pi\,k\,j}{2^n}}\,\ket{k}\]
+                    
+                    Its implementation is given in \cite{QCAQI}:
+                    
+                    \begin{figure}[ht]
+                        \centering
+                        \begin{quantikz}
+                            \qw & \gate{\mathbf{H}} & \gate{\mathbf{R}_2} & \qw & \cdots & & \gate{\mathbf{R}_{n-1}} & \gate{\mathbf{R}_n} & \qw & \qw & \cdots & & \qw & \qw & \qw & \swap{4} & \qw & \qw\\
+                            \qw & \qw & \ctrl{-1} & \qw & \cdots & & \qw & \qw & \gate{\mathbf{H}} & \qw & \cdots & & \qw & \qw & \qw & \qw & \swap{2} & \qw\\
+                            \vdots\\
+                            \qw & \qw & \qw & \qw & \cdots & & \ctrl{-3} & \qw & \qw & \qw & \cdots & & \gate{\mathbf{H}} & \gate{\mathbf{R}_2} & \qw & \qw & \targX{} & \qw\\
+                            \qw & \qw & \qw & \qw & \cdots & & \qw & \ctrl{-4} & \qw & \qw & \cdots & & \qw & \ctrl{-1} & \gate{H} & \targX{} & \qw & \qw\\
+                        \end{quantikz}
+                        \caption{Implementation of the Quantum Fourier Transform}
+                    \end{figure}
+                    
+                    where \(\mathbf{H}\) is the Hadamard gate:
+                    
+                    \[\mathbf{H}\overset{\text{\tiny{def}}}{=}\frac{1}{\sqrt{2}}\begin{pmatrix}1 & 1\\1 & -1\end{pmatrix}\]
+                    
+                    and where \(\mathbf{R}_k\) is defined as, for \(k\in\llbracket2\,;\,n\rrbracket\):
+                    
+                    \[\mathbf{R}_k\overset{\text{\tiny{def}}}{=}\begin{pmatrix}1 & 0\\0 & \mathrm{e}^{\frac{2\,\mathrm{i}\,\pi}{2^k}}\end{pmatrix}\,.\]
+                    
+                    We assume both gates can be implemented in \(O(1)\).
+                    
+                    Note that is it possible to see \(\mathbf{F}\) implemented without the SWAP gates at the end for performance reasons. Thanks to this decomposition, we can implement \(\mathbf{F}\) in time \(O\left(n^2\right)\).
+                \end{definition}
+                
+                \begin{definition}[Quantum phase estimation]
+                    
+                \end{definition}
+
+
         \subsection{Quantum hardware considerations}
             \label{subsec:Hardware}
+            Whilst the previous formalism is useful to design quantum gates, it is important to keep in mind that some operations are not allowed, or are subject to some limitations because of current quantum hardware. Two of them are particularly important.
+            
+            
             %TODO: Limitations. Gap between theoretic implementation and real one.
             
     \section{A quantum recommendation system}
         \label{sec:QRS}
+        In this section, we intend to describe what a recommendation system is and how the quantum algorithm of \citeauthor{QRS} solves it.
+        \subsection{Principles of a recommendation system}
+        \subsection{A quantum algorithm as a recommendation system}
     \section{Designing a quantum circuit for a recommendation system}
         \label{sec:QCircuit}
         \subsection{Loading from QRAM}
