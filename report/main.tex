@@ -51,7 +51,7 @@
             \label{subsec:QCT}
             The principle of Quantum Computing is to design a formalism so that one can encode information as binary words, just like in classical computing. Linking this formalism to the physics principles is a problem we will not discuss here, but whose history is summarized in \cite{HistoryEquivalence}.
             \subsubsection{Quantum computing objects}
-                Quantum computing operates with qubits, which are unitary vectors of \(\mathbf{C}^2\). Such a vector represent a quantum particle state which we denote \(\ket{x}\). We define \(\ket{0}\) and \(\ket{1}\) to be the vectors of the computational basis of \(\mathbf{C}^2\) seen as a \(\mathbf{C}\)-vector field. As such, given \(\ket{x}\in\mathbf{C}^2\) we can write:
+                Quantum computing operates with qubits, which are unitary vectors of \(\mathbf{C}^2\). Such a vector represent a quantum particle state which we denote \(\ket{x}\). A quantum register is defined as a group of qubits. We define \(\ket{0}\) and \(\ket{1}\) to be the vectors of the computational basis of \(\mathbf{C}^2\) seen as a \(\mathbf{C}\)-vector field. As such, given \(\ket{x}\in\mathbf{C}^2\) we can write:
                 
                 \[\ket{x} = \begin{pmatrix}\alpha\\\beta\end{pmatrix}=\alpha\,\begin{pmatrix}1\\0\end{pmatrix} + \beta\,\begin{pmatrix}0\\1\end{pmatrix}=\alpha\,\ket{0} + \beta\,\ket{1}\]
                 
@@ -148,7 +148,7 @@
                 \end{figure}
             \subsubsection{Measurement}
                 \label{subsubsec:Measurement}
-                Let \ket{x} be a quantum state of \(n\) qubits. We denote by \ket{k} the \(k\)-th vector of the computational basis of \(\mathbf{C}^{2^n}\). The notation \ket{k} will always be used in a non-ambiguous way. Hence, it will only be used to write a quantum state whose number of qubits is known. As such, we have:
+                Let \ket{x} be a quantum state of \(n\) qubits. We denote by \ket{k} the \(k\)\textsuperscript{th} vector of the computational basis of \(\mathbf{C}^{2^n}\). The notation \ket{k} will always be used in a non-ambiguous way. Hence, it will only be used to write a quantum state whose number of qubits is known. As such, we have:
                 
                 \[\ket{x} = \sum_{k=1}^n\alpha_k\,\ket{k}\]
                 
@@ -193,7 +193,7 @@
                 
                 \[\begin{array}{ccccccc}\X\overset{\text{\tiny{def}}}{=}\begin{pmatrix}0 & 1\\1 & 0\end{pmatrix} & \mathbf{Y}\overset{\text{\tiny{def}}}{=}\begin{pmatrix}0&\mathrm{-i}\\\mathrm{i} & 0\end{pmatrix}&\mathrm{Z}\overset{\text{\tiny{def}}}{=}\begin{pmatrix}1 & 0\\0 & -1\end{pmatrix}&\mathrm{H}\overset{\text{\tiny{def}}}{=}\frac{1}{\sqrt{2}}\begin{pmatrix}1 & 1\\1 & -1\end{pmatrix}&\mathrm{R}_{\theta}\overset{\text{\tiny{def}}}{=}\begin{pmatrix}1 & 0\\0 & \mathrm{e}^{\mathrm{i}\,\theta}\end{pmatrix}&\mathrm{I}\overset{\text{\tiny{def}}}{=}\begin{pmatrix}1 & 0\\0 & 1\end{pmatrix}\end{array}\]
                 
-                with \(\theta\in\mathbf{R}\). For every matrix \(\mathbf{U}\) in this elementary set, we also define its controlled equivalent \(\mathbf{CU}\) as elementary. Note that this does not include \(\mathrm{CU}\) itself: a gate that is controlled on more than 2 qubits must be implemented using gate controlled on a single qubit. Finally, we add one more elementary gate (without adding its controlled equivalent), which is the Toffoli gate \(\mathbf{CCX}\), also known as the CCNOT gate. Its circuit representation is:
+                with \(\theta\in\mathbf{R}\). For every matrix \(\mathbf{U}\) in this elementary set, we also define its controlled equivalent \(\mathsf{C}-\mathbf{U}\) as elementary. Note that this does not include \(\mathsf{C}-\mathrm{U}\) itself: a gate that is controlled on more than 2 qubits must be implemented using gate controlled on a single qubit. Finally, we add one more elementary gate (without adding its controlled equivalent), which is the Toffoli gate \(\mathsf{CC}-\mathbf{X}\), also known as the CCNOT gate. Its circuit representation is:
                 
                 \begin{figure}[ht]
                     \centering
@@ -205,9 +205,9 @@
                     \caption{The Toffoli gate}
                 \end{figure}
                 
-                Hence, the set \(\mathcal{E}\) os elementary gates is:
+                Hence, the set \(\mathcal{E}\) of elementary gates is:
                 
-                \[\mathcal{E} \overset{\text{\tiny{def}}}{=} \{\mathbf{X}, \mathbf{Y}, \mathbf{Z}, \mathbf{CX}, \mathbf{CZ}, \mathbf{CCX}\}\,.\]
+                \[\mathcal{E} \overset{\text{\tiny{def}}}{=} \{\mathbf{X}, \mathbf{Y}, \mathbf{Z}, \mathsf{C}-\mathbf{X}, \mathsf{C}-\mathbf{Y}, \mathsf{C}-\mathbf{Z}, \mathsf{CC}-\mathbf{X}\}\,.\]
                 
                 \begin{assumption}
                     \label{assumption:Elementary}
@@ -234,6 +234,11 @@
                     Hence, the time complexity of a SWAP gate is also \(O(1)\).
                 \end{definition}
                 
+                \begin{definition}[\(n\)-controlled gate]
+                    Let \(\mathbf{U}\) be a unitary and \(n\in\mathbf{N}\). Then it is possible to implement a gate \(\mathsf{C}^n-\mathbf{U}\) that acts on \(n+1\) qubits such that \(\mathbf{U}\) is applied to the \(n+1\)\textsuperscript{th} qubit if and only if the \(n\) other qubits are in state \ket{1} in time \(O(n)\) using \(n-1\) additional qubits. The proof and the decomposition is given in \cite{Berta}.
+                    % TODO: write it in full
+                \end{definition}
+
                 \begin{definition}[Quantum Fourier Transform]
                     The Quantum Fourier Transform gate \(\mathbf{F}\) matches the classical definition of the Fourier transform. Hence, we have, for \(n\) qubits:
                     
@@ -267,26 +272,115 @@
                 \end{definition}
                 
                 \begin{definition}[Quantum phase estimation]
+                    Let \(\mathbf{U}\) be a unitary matrix. Let \ket{\psi} be an eigenvector of \(\mathbf{U}\) associated to the eigenvalue \(\mathrm{e}^{2\,\mathrm{i}\,\pi\,\theta}\), with \(\theta\in[0\,;\,1]\). Let be \(\varepsilon\in\mathbf{R}_+^*\). Let \(\overline{\theta}\) be the best approximation of \(\theta\) on \(n=\left\lceil\log_2(\frac1\varepsilon)\right\rceil\) bits, that is:
                     
+                    \[\left\|\theta-\overline{\theta}\right\|_1\leqslant\varepsilon\,.\]
+                    
+                    Then with probability at least \(\frac{4}{\pi^2}\), the Quantum Phase Estimation algorithm maps the state \(\ket{0}^{\otimes n}\,\ket{\psi}\) to the state \(\ket{\overline{\theta}}\,\ket{\psi}\) in time \(O\left(2^n\,T_\mathbf{U}\right)\), where \(T_{\mathbf{U}}\) is the time taken for implementing \(\mathbf{U}\).
+                    
+                    The actual implementation of the \(\mathbf{QPE}\) gate using \(\mathbf{QFT}^\dagger\) is well-known in the literature, and presented for instance in \cite{QPE}. Furthermore, this implementation will be discussed in \autoref{subsec:ImplementingQPE}. For this reason, we deliberately chose not to show it here.
                 \end{definition}
 
 
         \subsection{Quantum hardware considerations}
             \label{subsec:Hardware}
-            Whilst the previous formalism is useful to design quantum gates, it is important to keep in mind that some operations are not allowed, or are subject to some limitations because of current quantum hardware. Two of them are particularly important.
+            Whilst the previous formalism is useful to design quantum gates, it is important to keep in mind that some operations are not allowed, or are subject to some limitations because of current quantum hardware. These limitations are the difference between the theoretic algorithm and its actual implementation and as such, the reason of this paper. Three of them are particularly important.
             
+            First of all, only a limited set of gates can be implemented. For instance, Google’s Xmon devices only supports the \(\mathbf{Z}\) gate, the \(\mathsf{C}-\mathbf{Z}\) gate and a more general version of the \(\X\) gate. This is not of great importance, as long as we can define every gate in \(\mathcal{E}\) from every allowed gate in time \(O(1)\), to satisfy \thref{assumption:Elementary}.
             
-            %TODO: Limitations. Gap between theoretic implementation and real one.
+            Then, only neighbours qubits can interact. Depending on how the qubits are ordered, like in a line or on a grid, their connectivity changes. To overcome this problem, we need to add SWAP gates whenever we desire to control a gate on several qubits. Since the number of SWAP gates is however in \(O(n)\), it does not change the overall complexity of \(\mathsf{C}^n-\mathbf{U}\). Hence, for simplicity and legibility, we decided not to include the SWAP gates in the circuit.
             
+            Finally, it is not possible to add gates dynamically on the quantum circuit. For instance, it is not possible to perform a measurement and add a gate dynamically as a function of the result. More precisely, there is no possibility to act on any qubit inside once it has begun to run. As a recall, the no-deleting theorem states:
+            
+            \begin{theorem}[No-deleting theorem]
+                There is no unitary \(\mathbf{U}\) that maps an arbitray state \ket{\psi} to the state \ket{0}.
+            \end{theorem}
+
+            Therefore, the no-deleting theorem still applies. Indeed, it is not possible to measure a state and then to apply \(\X\) gates accordingly.
+            
+            Other considerations are to be taken into account, like for instance the number of qubits available. Since there is no way to mitigate them, we discuss them in the conclusion.
     \section{A quantum recommendation system}
         \label{sec:QRS}
         In this section, we intend to describe what a recommendation system is and how the quantum algorithm of \citeauthor{QRS} solves it.
         \subsection{Principles of a recommendation system}
+            Let us consider some platform with \(m\) different users and \(n\) different products. Each user has the possibility, once bought, to rate a product according to a binary marking scheme: either the user liked the product, or she did not. The goal of a recommendation system is to provide a user a recommendation from a list of already graded products. This list includes also products graded by other users.
+            
+            Hence, we can represent this as a matrix with \(m\) rows and \(n\) columns, where each row represents a user and each column a product. Each coefficient of the matrix is either 0 or 1, indicating whether the user liked the product. This matrix is called the preference matrix, and we only have access to a portion of it (otherwise the problem would be trivial).
+            
+            From this incomplete preference matrix, the recommendation system will compute an approximation of the true preference matrix and use it to make recommendation. Its goal is to discover somehow the relationships between users to discover how the fact that some user rated a product positively affects the probability that another user would do the same. For this reason, it is assumed that the preference matrix has a godd approximation of rank \(k\). In real-world terms, it means that it makes the assumption that there are \(k\) typical different users. Two users belonging to the same class will most likely rate positively the same products.
+            
+            In classical approaches at that time, an SVD decomposition was performed on the reconstructed preference matrix. The, by keeping only the \(k\) largest singular values, a rank-\(k\) matrix was obtained and used for making predictions. This approach is polynomial in the parameters of the preference matrix \(m\) and \(n\). The problem is that the reconstructed matrix has to be recomputed each time a user rates a new product. The problem is that the rank-\(k\) matrix had to be computed before getting a result from it. The principle of the algorithm of \citeauthor{QRS} is therefore to sample from this reconstructed matrix to get a recommendation once in polylogarithmic time.
         \subsection{A quantum algorithm as a recommendation system}
+            The following describes the algorithm presented in \cite{QRS}. Let \(\mathbf{P}\in\{0\,;\,1\}^{m\times n}\) a matrix that has a good rank-\(k\) approximation. That is:
+            
+            \[\exists\varepsilon\in\mathbf{R}_+^*,\exists\hat{\mathbf{P}},\left\|\mathbf{P} - \hat{\mathbf{P}}\right\|_F\leqslant\varepsilon\|\mathbf{P}\|_F\,.\]
+            
+            Let \(\eta\in\mathbf{R}_+^*\). Then we define the matrix \(\hat{\mathbf{P}}\) as:
+            
+            \[\forall(i, j)\in\llbracket1\,;\,m\rrbracket\times\llbracket1\,;\,n\rrbracket,\hat{\mathbf{P}}_i,j\overset{\text{\tiny{def}}}{=}\begin{cases}\mathbf{P}_i,j&\text{with probability } \frac{16\,n}{\eta\,\|\mathbf{P}\|_F}\\0&\text{with probability } 1-\frac{16\,n}{\left(\eta\,\|\mathbf{P}\|_F\right)^2}\end{cases}\,.\]
+            
+            Once \(\hat{\mathbf{P}}\) has been built, the algorithm adds every new information it gets after every products it recommends, to it. Hence, the definition above is only used to initialize \(\hat{\mathbf{P}}\).
+            
+            Let \(k\) be the index of the row we want to sample. That is, we want a recommendation for user \(k\). Then the algorithm operates in several steps, which we describe in the following.
+            
+            \subsubsection{Loading the row vector as a quantum state}
+                The first thing to do is to load a quantum state that corresponds to \(\hat{\mathbf{P}}_i\). That is, we want to create:
+                
+                \[\ket{\hat{\mathbf{P}}_i} \overset{\text{\tiny{def}}}{=} \sum_{i=1}^{\lceil\log(n)\rceil}\hat{\mathbf{P}}_{k,i}\,\ket{i}\,.\]
+                
+                The problem is hence to load in logarithmic time a quantum state corresponding to a vector stored in a classical data structure. This is done via the use of QRAM, as described in \autoref{subsec:QRAM}.
+                
+                We denote the SVD decomposition of \(\hat{\mathbf{P}}\) as:
+                
+                \[\hat{\mathbf{P}} = \sum_{i}\sigma_i\,\mathbf{u}_i\,\mathbf{v}_i^\dagger\,.\]
+                
+                Even though we load \ket{\hat{\mathbf{P}}_i} using its coefficients in the computational basis, we denote the quantum state in the left orthonormal basis in the SVD decomposition of \(\hat{\mathbf{P}}\), that is:
+                
+                \[\ket{\hat{\mathbf{P}}_i} \overset{\text{\tiny{def}}}{=} \sum_{i}\alpha_i\,\ket{v_i}\,.\]
+                
+            \subsubsection{Finding singular values}
+                Now that we have the quantum state \(\sum_{i}\alpha_i\,\ket{v_i}\), we would like to find its singular values to get the state \(\sum_{i}\alpha_i\,\ket{v_i}\,\ket{\sigma_i}\). However, the Quantum Phase Estimation algorithm cannot be used right away, since \(\hat{\mathbf{P}}\) is not unitary.
+                
+                Hence, the goal is to define in logarithmic time a unitary \(\mathbf{W}\) whose eigenvalues are the singular values of \(\hat{\mathbf{P}}\). In order to define it, two matrices \(\mathbf{M}_1\in\mathbf{R}^{m\,n\times m}\) and \(\mathbf{M}_2\in\mathbf{R}^{m\,n\times n}\) are defined as follows:
+                
+                \[\forall i\in\llbracket1\,;\,m\rrbracket,\mathbf{M}_{1_i}\overset{\text{\tiny{def}}}{=}\mathbf{e}_i\otimes\frac{\hat{\mathbf{P}}_i}{\left\|\hat{\mathbf{P}}_i\right\|}\]
+                
+                with \(\mathbf{e}_i\) being the \(i\)\textsuperscript{th} vector of the computational basis of \(\mathbf{R}^{m}\) and:
+                
+                \[\forall i\in\llbracket1\,;\,n\rrbracket,\mathbf{M}_{2_i}\overset{\text{\tiny{def}}}{=}\frac{\overset{\sim}{\mathbf{P}}}{\left\|\hat{\mathbf{P}}\right\|_F}\otimes\mathrm{e}'_i\]
+                
+                with \(\mathbf{e}'_i\) being the \(i\)\textsuperscript{th} vector of the computational basis of \(\mathbf{R}^{n}\) and \(\overset{\sim}{\mathbf{P}}\) being defined as:
+                
+                \[\forall i\in\llbracket1\,;\,m\rrbracket,\overset{\sim}{\mathbf{P}}_i\overset{\text{\tiny{def}}}{=}\left\|\hat{\mathbf{P}}_i\right\|\,.\]
+                
+                Then, by naming \(\mathbf{U}\) the reflection on the vector space spanned by the columns of \(\mathbf{M}_1\) and \(\mathbf{V}\) the reflection on the vector space spanned by the columns of \(\mathbf{M}_2\), then the unitary \(\mathbf{W} = \mathbf{U}\,\mathbf{V}\) has as eigenvalues the singular values of \(\hat{\mathbf{P}}_i\).
+                
+                Hence, the task is to implement in logarithmic time \(\mathbf{W}\) and to apply the Quantum Phase Estimation algorithm on it to get the state \(\sum_{i}\alpha_i\,\ket{v_i}\,\ket{\sigma_i}\). This is discussed in \autoref{subsec:ImplementingQPE}.
+            \subsubsection{Applying a gate according to a threshold}
+                The goal now is to define a unitary \(\mathbf{T}_\sigma\) such that:
+                
+                \[\mathbf{T}_\sigma:\ket{t}\,\ket{0}\mapsto\begin{cases}\ket{t}\,\ket{1} &\text{if } t < \sigma\,\left(1-\frac\kappa2\right)\\\ket{t}\,\ket{0}&\text{otherwise}\end{cases}\,.\]
+                
+                Hence, we need to be able to compare two quantum states. This is discussed in \autoref{subsec:Threshold}.
+                
+                After having applied \(\mathrm{T}_\sigma\), we are left with the state:
+                
+                \[\sum_{i\in\mathcal{S}}\alpha_i\,\ket{v_i}\,\ket{\sigma_i}\,\ket{0} + \sum_{i\in\overline{\mathcal{S}}}\alpha_i\,\ket{v_i}\,\ket{\sigma_i}\,\ket{1}\]
+                
+                where \(\mathcal{S}\) is the set of indexes so that the corresponding eigenvector has a singular value greater than the threshold \(\sigma\).
+            \subsubsection{Concluding}
+                Once the previous state obtained, we first need to uncompute the output of the Quantum Phase Estimation algorithm, so that the final state is not entangled. Hence, we are left with:
+                
+                \[\sum_{i\in\mathcal{S}}\alpha_i\,\ket{v_i}\,\ket{0} + \sum_{i\in\overline{\mathcal{S}}}\alpha_i\,\ket{v_i}\,\ket{1}\,.\]
+                
+                We then measure the second register in the computational basis. If the outcome is \ket{1}, then we redo everything. If it is \ket{0}, then we measure the first register in the computational basis to get a product \(j\).
+                
     \section{Designing a quantum circuit for a recommendation system}
         \label{sec:QCircuit}
         \subsection{Loading from QRAM}
+            \label{subsec:QRAM}
         \subsection{Applying the Quantum Phase Estimation algorithm}
+            \label{subsec:ImplementingQPE}
             Now that the state \ket{x} has been loaded from QRAM, we are to append a quantum register of size \(\lceil\log(n)\rceil\) before the quantum register in which \ket{x} has been loaded and to apply a unitary \(\mathbf{Q}\) to get the state:
             
             \[\ket{\mathbf{Q}\,x}=\sum_i\alpha_i\,\ket{\overset{\sim}{\mathbf{A}}, j}\,.\]
@@ -294,6 +388,7 @@
             Since \(\overset{\sim}{\mathbf{A}}\) is easily loadable via QRAM, we only have to apply the loading gate \(\mathbf{L}_{\overset{\sim}{\mathbf{A}}}\) to the first register to get the desired state.
             
         \subsection{Separating states according to a threshold}
+            \label{subsec:Threshold}
             Once the QPE has been applied, the state of the system is \(\sum_i\alpha_i\,\ket{v_i}\,\ket{a_i}\), where \(\ket{a_i}\) is the output of the phase estimation algorithm associated to the eigenvector \(\ket{v_i}\) of \(\mathbf{U}\,\mathbf{V}\), that is:
             \[\forall i\in\llbracket1\,;\,\lceil\log(n)\rceil\rrbracket,\mathbf{U}\,\mathbf{V}\,\ket{v_i}\approx\mathrm{e}^{2\,\mathrm{i}\,\pi\,a_i}\,\ket{v_i}\,.\]
             
