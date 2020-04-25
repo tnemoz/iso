@@ -16,7 +16,7 @@
 	\input{titlepage.tex}
 	\maketitle
     \begin{abstract}
-        In this work, we design a generic quantum circuit to implement a recommendation system following the algorithm of \citeauthor{QRS}. This algorithm takes as input a \(m\times n\) binary matrix which has a good rank-\(k\) approximation and returns a product recommendation for an user in time \(O(\log(k)\,\log(m\,n))\).
+        In this work, we design a generic quantum circuit to implement a recommendation system following the algorithm of \citeauthor{QRS}. This algorithm takes as input a \(m\times n\) binary matrix which has a good rank-\(k\) approximation and returns a product recommendation for an user in time \(O(\log(k)\,\polylog(m\,n))\).
         
         We discuss the limitations of implementing this algorithm on a real quantum computer and the differences between the high-level description of the algorithm and its low-level implementation. In particular, our implementation's complexity matches the original algorithm' one of \(O(\polylog(m\,n)\,\poly(k))\), but succeeds with only a probability of \(1-\frac{1}{\log(m\,n)}\), where the original algorithm succeeds with probability \(1 - \frac{1}{\poly(m\,n)}\).
     \end{abstract}
@@ -214,7 +214,32 @@
                     Every gate of \(\mathcal{E}\) can be implemented in \(O(1)\).
                 \end{assumption}
                 
-                Hence, we can define the complexity of a gate by decomposing it in a succession of elementary gates.
+                \thref{assumption:Elementary} ensures that we can compute the complexity of a quantum algorithm by decomposing it in a circuit that contains only elementary gates. For instance, a quantum algorithm with time complexity \(O(\poly(n))\) uses a polynomial number in \(n\) of consecutive gates. Note that gates can be applied in parallel. For instance, the following circuit has a time complexity in \(O(n)\):
+                
+                \begin{figure}[ht]
+                    \centering
+                    \begin{quantikz}
+                        \lstick{\ket{q_1}} & \gate{\mathbf{U}_1} & \gate{\mathbf{U}_2}&\qw&\cdots& &\gate{\mathbf{U}_n}&\qw\\
+                    \end{quantikz}
+                    \caption{An exemple of a circuit with \(O(n)\) time complexity}
+                \end{figure}
+                
+                while the following has a time complexity of \(O(1)\):
+                
+                \begin{figure}[ht]
+                    \centering
+                    \begin{quantikz}
+                        \lstick{\ket{q_1}} & \gate{\mathbf{U}_1} & \qw\\
+                        \lstick{\ket{q_2}} & \gate{\mathbf{U}_2} & \qw\\
+                        \vdots&&&\\
+                        \lstick{\ket{q_n}} & \gate{\mathbf{U}_n} & \qw\\
+                    \end{quantikz}
+                    \caption{An exemple of parallel computation}
+                \end{figure}
+
+                Of course, these examples assume that all the \(\mathbf{U}_i\) are elementary gates.
+                
+                That said, the first gate we introduce is the SWAP gate, whose utility will be described in \autoref{subsec:Hardware}.
                 
                 \begin{definition}[SWAP gate]
                     The swap gate is used to exchange the value of two qubits. It is implemented as follows:
@@ -234,10 +259,14 @@
                     Hence, the time complexity of a SWAP gate is also \(O(1)\).
                 \end{definition}
                 
+                We will need to add more control qubits to our gates. Hence, we describe how to apply a gate on a qubit controlled by \(n\) other qubits.
+                
                 \begin{definition}[\(n\)-controlled gate]
                     Let \(\mathbf{U}\) be a unitary and \(n\in\mathbf{N}\). Then it is possible to implement a gate \(\mathsf{C}^n-\mathbf{U}\) that acts on \(n+1\) qubits such that \(\mathbf{U}\) is applied to the \(n+1\)\textsuperscript{th} qubit if and only if the \(n\) other qubits are in state \ket{1} in time \(O(n)\) using \(n-1\) additional qubits. The proof and the decomposition is given in \cite{Berta}.
                     % TODO: write it in full
                 \end{definition}
+                
+                We also introduce the Quantum Fourier Transform gate. Its only use is within the Quantum Phase Algorithm, but by decomposing things like this, the complexity analysis becomes clearer.
 
                 \begin{definition}[Quantum Fourier Transform]
                     The Quantum Fourier Transform gate \(\mathbf{F}\) matches the classical definition of the Fourier transform. Hence, we have, for \(n\) qubits:
@@ -271,6 +300,8 @@
                     Note that is it possible to see \(\mathbf{F}\) implemented without the SWAP gates at the end for performance reasons. Thanks to this decomposition, we can implement \(\mathbf{F}\) in time \(O\left(n^2\right)\).
                 \end{definition}
                 
+                As said earlier, the utility of defining the Quantum Fourier Transform is to use it within the Quantum Phase Estimation Algorithm, whose goal is to estimate the eigenvalue of a given unitary matrix associated to a given eigenvector of this matrix.
+                
                 \begin{definition}[Quantum phase estimation]
                     Let \(\mathbf{U}\) be a unitary matrix. Let \ket{\psi} be an eigenvector of \(\mathbf{U}\) associated to the eigenvalue \(\mathrm{e}^{2\,\mathrm{i}\,\pi\,\theta}\), with \(\theta\in[0\,;\,1]\). Let be \(\varepsilon\in\mathbf{R}_+^*\). Let \(\overline{\theta}\) be the best approximation of \(\theta\) on \(n=\left\lceil\log_2(\frac1\varepsilon)\right\rceil\) bits, that is:
                     
@@ -295,8 +326,10 @@
             \begin{theorem}[No-deleting theorem]
                 There is no unitary \(\mathbf{U}\) that maps an arbitray state \ket{\psi} to the state \ket{0}.
             \end{theorem}
-
-            Therefore, the no-deleting theorem still applies. Indeed, it is not possible to measure a state and then to apply \(\X\) gates accordingly.
+            
+            The no-deleting theorem holds whenever the operations that we consider are unitary, which is the case whenever no measurement is performed. Here, we claim that this theorem still holds even whenever a measurement is performed.
+            
+            One may think about performing a measurement applying \(\X\) gates accordingly. Even if we were able to perform such a task, the coherence of the qubits wouldn't be guaranteed anymore. Hence, one would have to recreate the state on which it performed the measurement, and to apply measuring gates. Plus, it would imply that these measuring gates give two times in a row the same result, which has a probability of failure (otherwise there would be no point in performing a measurement in first place).
             
             Other considerations are to be taken into account, like for instance the number of qubits available. Since there is no way to mitigate them, we discuss them in the conclusion.
     \section{A quantum recommendation system}
@@ -311,7 +344,7 @@
             
             In classical approaches at that time, an SVD decomposition was performed on the reconstructed preference matrix. The, by keeping only the \(k\) largest singular values, a rank-\(k\) matrix was obtained and used for making predictions. This approach is polynomial in the parameters of the preference matrix \(m\) and \(n\). The problem is that the reconstructed matrix has to be recomputed each time a user rates a new product. The problem is that the rank-\(k\) matrix had to be computed before getting a result from it. The principle of the algorithm of \citeauthor{QRS} is therefore to sample from this reconstructed matrix to get a recommendation once in polylogarithmic time.
         \subsection{A quantum algorithm as a recommendation system}
-            The following describes the algorithm presented in \cite{QRS}. Let \(\mathbf{P}\in\{0\,;\,1\}^{m\times n}\) a matrix that has a good rank-\(k\) approximation. That is:
+            The following describes the algorithm presented in \cite{QRS}. This section intends to give a hogh-level overview of this algorithm. Its actual implementation is discussed in \autoref{sec:QCircuit}. Let \(\mathbf{P}\in\{0\,;\,1\}^{m\times n}\) a matrix that has a good rank-\(k\) approximation. That is:
             
             \[\exists\varepsilon\in\mathbf{R}_+^*,\exists\hat{\mathbf{P}},\left\|\mathbf{P} - \hat{\mathbf{P}}\right\|_F\leqslant\varepsilon\|\mathbf{P}\|_F\,.\]
             
@@ -339,7 +372,15 @@
                 \[\ket{\hat{\mathbf{P}}_i} \overset{\text{\tiny{def}}}{=} \sum_{i}\alpha_i\,\ket{v_i}\,.\]
                 
             \subsubsection{Finding singular values}
-                Now that we have the quantum state \(\sum_{i}\alpha_i\,\ket{v_i}\), we would like to find its singular values to get the state \(\sum_{i}\alpha_i\,\ket{v_i}\,\ket{\sigma_i}\). However, the Quantum Phase Estimation algorithm cannot be used right away, since \(\hat{\mathbf{P}}\) is not unitary.
+                We now have the quantum state:
+                
+                \[\sum_{i}\alpha_i\,\ket{v_i}\]
+                
+                and we would like to find its singular values to get the state:
+                
+                \[\sum_{i}\alpha_i\,\ket{v_i}\,\ket{\sigma_i}\,.\]
+                
+                However, the Quantum Phase Estimation algorithm cannot be used right away, since \(\hat{\mathbf{P}}\) is not unitary.
                 
                 Hence, the goal is to define in logarithmic time a unitary \(\mathbf{W}\) whose eigenvalues are the singular values of \(\hat{\mathbf{P}}\). In order to define it, two matrices \(\mathbf{M}_1\in\mathbf{R}^{m\,n\times m}\) and \(\mathbf{M}_2\in\mathbf{R}^{m\,n\times n}\) are defined as follows:
                 
@@ -355,9 +396,23 @@
                 
                 Then, by naming \(\mathbf{U}\) the reflection on the vector space spanned by the columns of \(\mathbf{M}_1\) and \(\mathbf{V}\) the reflection on the vector space spanned by the columns of \(\mathbf{M}_2\), then the unitary \(\mathbf{W} = \mathbf{U}\,\mathbf{V}\) has as eigenvalues the singular values of \(\hat{\mathbf{P}}_i\).
                 
-                Hence, the task is to implement in logarithmic time \(\mathbf{W}\) and to apply the Quantum Phase Estimation algorithm on it to get the state \(\sum_{i}\alpha_i\,\ket{v_i}\,\ket{\sigma_i}\). This is discussed in \autoref{subsec:ImplementingQPE}.
+                Hence, the task is to implement in logarithmic time \(\mathbf{W}\) and to apply the Quantum Phase Estimation algorithm on it to get the state:
+                
+                \[\sum_{i}\alpha_i\,\ket{v_i}\,\ket{\sigma_i}\,.\]
+                
+                which is discussed in \autoref{subsec:ImplementingQPE}.
             \subsubsection{Applying a gate according to a threshold}
-                The goal now is to define a unitary \(\mathbf{T}_\sigma\) such that:
+                The previous part of the algorithm left us with the state:
+                
+                \[\sum_{i}\alpha_i\,\ket{v_i}\,\ket{\sigma_i}\,.\]
+                
+                In order to do a projection, we want to filter what singular values we want to keep. Hence, we define a threshold \(\tau\) and want to get the state:
+                
+                \[\sum_{i\in\mathcal{S}}\alpha_i\,\ket{v_i}\,\ket{\sigma_i}\,\ket{0} + \sum_{i\in\overline{\mathcal{S}}}\alpha_i\,\ket{v_i}\,\ket{\sigma_i}\,\ket{1}\]
+                
+                where \(\mathcal{S}\) is the set of indexes such that the corresponding eigenvector is associated with a eigenvalue \(\sigma_i\geqslant\tau\). In the algorithm of \citeauthor{QRS}, \(\tau\) is defined to be \(\sigma\,\left(1-\frac\kappa2\right)\).
+                
+                Hence, the goal now is to define a unitary \(\mathbf{T}_\sigma\) such that:
                 
                 \[\mathbf{T}_\sigma:\ket{t}\,\ket{0}\mapsto\begin{cases}\ket{t}\,\ket{1} &\text{if } t < \sigma\,\left(1-\frac\kappa2\right)\\\ket{t}\,\ket{0}&\text{otherwise}\end{cases}\,.\]
                 
@@ -367,7 +422,7 @@
                 
                 \[\sum_{i\in\mathcal{S}}\alpha_i\,\ket{v_i}\,\ket{\sigma_i}\,\ket{0} + \sum_{i\in\overline{\mathcal{S}}}\alpha_i\,\ket{v_i}\,\ket{\sigma_i}\,\ket{1}\]
                 
-                where \(\mathcal{S}\) is the set of indexes so that the corresponding eigenvector has a singular value greater than the threshold \(\sigma\).
+                with \(\mathcal{S}\) being defined as above.
             \subsubsection{Concluding}
                 Once the previous state obtained, we first need to uncompute the output of the Quantum Phase Estimation algorithm, so that the final state is not entangled. Hence, we are left with:
                 
@@ -389,121 +444,152 @@
             
         \subsection{Separating states according to a threshold}
             \label{subsec:Threshold}
-            Once the QPE has been applied, the state of the system is \(\sum_i\alpha_i\,\ket{v_i}\,\ket{a_i}\), where \(\ket{a_i}\) is the output of the phase estimation algorithm associated to the eigenvector \(\ket{v_i}\) of \(\mathbf{U}\,\mathbf{V}\), that is:
-            \[\forall i\in\llbracket1\,;\,\lceil\log(n)\rceil\rrbracket,\mathbf{U}\,\mathbf{V}\,\ket{v_i}\approx\mathrm{e}^{2\,\mathrm{i}\,\pi\,a_i}\,\ket{v_i}\,.\]
+            \subsubsection{Defining the condition}
+                Once the QPE has been applied, the state of the system is \(\sum_i\alpha_i\,\ket{v_i}\,\ket{a_i}\), where \(\ket{a_i}\) is the output of the phase estimation algorithm associated to the eigenvector \(\ket{v_i}\) of \(\mathbf{U}\,\mathbf{V}\), that is:
+                \[\forall i\in\llbracket1\,;\,\lceil\log(n)\rceil\rrbracket,\mathbf{U}\,\mathbf{V}\,\ket{v_i}\approx\mathrm{e}^{2\,\mathrm{i}\,\pi\,a_i}\,\ket{v_i}\,.\]
+                
+                What we want to do now is to define a threshold unitary \(\mathbf{T}_\sigma\) such that:
+                
+                \[\mathbf{T}_\sigma:\ket{t}\,\ket{0}\mapsto\begin{cases}\ket{t}\,\ket{1} &\text{if } t < \sigma\,\left(1-\frac\kappa2\right)\\\ket{t}\,\ket{0}&\text{otherwise}\end{cases}\,.\]
+                
+                In the original paper, \(\mathbf{T}_\sigma\) is applied on the second quantum register, which contains the approximation of the singular values of \(\mathbf{A}\). Hence, what we want to do is to design \(\mathbf{T}_\sigma\) so that it can be applied to the second register directly following the QPE. Let us consider an approximation \(\overline{\sigma_i}\) of a singular value \(\sigma_i\) of \(\mathbf{A}\). By definition:
+                
+                \[\exists\theta_i\in[-\pi\,;\,\pi[,\overline{\sigma_i}=\cos\left(\frac{\theta_i}{2}\right)\,\|\mathbf{A}\|_F\,.\]
+                
+                What we want to do now is to perform a mapping between \(a_i\) and \(\theta_i\), since wa only have access to \(a_i\). As a recall, \(a_i\) is the output of the Quantum Phase Estimation algorithm. Hence, the phase of the eigenvalue is \(2\,\pi\,a_i\). The problem is that \(\theta_i\) is defined on \([-\pi\,;\,\pi[\). Hence, \(\theta_i\) and \(2\,\pi\,a_i\) corresponds to the same angle for \(a_i\in[0\,;\,\frac12[\). For \(a_i\geqslant\frac12\), \(\theta_i\) grows linearly again with \(a_i\), and we have:
+                
+                \[\exists(m,p)\in\mathbf{R}^2,\left\{\begin{array}{lcl}m\times\frac12+p &=& -\pi\\\\m\times1 + p &=& 0\end{array}\right.\]
+                
+                Hence, we have:
+                
+                \[\theta_i = \begin{cases}2\,\pi\,a_i&\text{if }a_i\in\left[0\,;\,\frac12\right[\\2\,\pi\,\left(a_i-1\right)&\text{if }a_i\in\left[\frac12\,;\,1\right[\end{cases}\,.\]
+                
+                Hence, the following holds:
+                
+                \begin{align*}
+                    &\sigma_i < \sigma\,\left(1 - \frac\kappa2\right)\\
+                    \iff&\cos\left(\frac{\theta_i}{2}\right) < \frac{\sigma\,\left(1 - \frac\kappa2\right)}{\|\mathbf{A}\|_F}\\
+                    \iff&\exists k\in\mathbf{Z},\pm\frac{\theta_i}{2}\in\left]2\,k\,\pi + \arccos\left(\frac{\sigma\,\left(1 - \frac\kappa2\right)}{\|\mathbf{A}\|_F}\right)\,;\,2\,k\,\pi + \frac\pi2\right]\,.
+                \end{align*}
+                
+                Since \(\frac{\theta_i}{2}\in\left[-\frac\pi2\,;\,\frac\pi2\right[\), this is equivalent to:
+                
+                \[\sigma_i < \sigma\,\left(1 - \frac\kappa2\right)\iff\left|\frac{\theta_i}{2}\right|\in\left]\arccos\left(\frac{\sigma\,\left(1 - \frac\kappa2\right)}{\|\mathbf{A}\|_F}\right)\,;\,\frac\pi2\right]\,.\]
+                
+                By replacing \(\theta_i\) by its definition, this gives us:
+                
+                \[\sigma_i < \sigma\,\left(1 - \frac\kappa2\right)\iff\begin{cases}a_i\in\left]\frac1\pi\,\arccos\left(\frac{\sigma\,\left(1 - \frac\kappa2\right)}{\|\mathbf{A}\|_F}\right)\,;\,\frac12\right]&\text{if }a_i<\frac12\\1-a_i\in\left]\frac1\pi\,\arccos\left(\frac{\sigma\,\left(1 - \frac\kappa2\right)}{\|\mathbf{A}\|_F}\right)\,;\,\frac12\right]&\text{if }a_i\geqslant\frac12\end{cases}\,.\]
+                
+                Which gives us our final criteria:
+                
+                \[\sigma_i < \sigma\,\left(1 - \frac\kappa2\right)\iff\begin{cases}\frac1\pi\,\arccos\left(\frac{\sigma\,\left(1 - \frac\kappa2\right)}{\|\mathbf{A}\|_F}\right) < a_i&\text{if }a_i<\frac12\\1-\frac1\pi\,\arccos\left(\frac{\sigma\,\left(1 - \frac\kappa2\right)}{\|\mathbf{A}\|_F}\right) > a_i&\text{if }a_i\geqslant\frac12\end{cases}\,.\]
             
-            What we want to do now is to define a threshold unitary \(\mathbf{T}_\sigma\) such that:
+            \subsubsection{Comparing a quantum state and a real number bitwise}
+                Since we know \(\sigma\) and \(\kappa\) beforehand, and since \(\|\mathbf{A}\|_F\) is easily accessible, we can compute \(b_1=\frac1\pi\,\arccos\left(\frac{\sigma\,\left(1 - \frac\kappa2\right)}{\|\mathbf{A}\|_F}\right)\) and \(b_2 = 1 - b_1\). Let \(b\) represent either \(b_1\) or \(b_2\).
+                
+                What we want to do is to determine whether \(b<a_i\) by looking at their binary expansion. As a recall, the following holds:
+                
+                \[\forall N\in\mathbf{N},2^-N=\sum_{k=N+1}^{+\infty}2^{-k}\,.\]
+                
+                In particular:
+                
+                \[\forall N\in\mathbf{N},\forall M\geqslant N,\forall \lambda\in\{0\,;\,1\}^{M-N},2^{-N}>\sum_{k=N+1}^M\lambda_k\,2^{-k}\,.\]
+                
+                We also know that we can write \(a_i\) using its binary expansion:
+                
+                \[a_i=\sum_{k=1}^{\lceil\log(n)\rceil}a_{i,k}2^{-k}\]
+                
+                and the same holds for \(b\):
+                
+                \[b=\sum_{k=1}^{\lceil\log(n)\rceil}b_{k}2^{-k}\,.\]
+                
+                Using this, we know that the first bit \(j\) at which \(b_j\neq a_{i,j}\) determines whether \(a_i\geqslant b\). If \(a_{i,j}=1\), then \(a_i>b\). If \(b_j=1\), then \(b>a_i\).
+                
+                Note that since \(\frac{\sigma\,\left(1 - \frac\kappa2\right)}{\|\mathbf{A}\|_F}\in]0\,;\,1]\), we have \(b_1\in\left[0\,;\,\frac12\right[\), hence \(b_{1,1}=0\) and \(b_{1,2}=1\). Hence, the goal is now to compare \(b\) and \(a_i\) bitwise to determine which one is superior. We consider the state \(\ket{\overline{a_i}} = \ket{a_{i,2}\cdots a_{i,\lceil\log(n)\rceil}}\), which represents \(a_i\) if \(a_i<\frac12\), that is \(a_{i,1}=0\), and \(a_i-\frac12\) if \(a_i>\frac12\), that is \(a_{i, 1} = 1\). Hence, the algorithm will go through \(\lceil\log(n)\rceil - 1\) steps for each one of \(b_1\) and \(b_2\). Without loss of generality, we will for now consider the case \(a_i<\frac12\), that is \(b=b_1\). We identify each of the steps by the number of the bit it applies to. Hence, the first step is identified with \(2\) since there is no need to test the fist bit, the second one with \(3\) and the last one with \(\lceil\log(n)\rceil\). Hence, at step \(j\), the algorithm operates on qubit \ket{a_{i,j}} and bit \(b_j\).
+                
+                Some circuits already exist for quantum bit-string comparison. For instance \citeauthor{QBSC} and describes different circuits to do such a task in \cite{QBSC}. However, these circuits use a whole quantum register to store one of the two strings. In order to take advantage from the fact that we have a classical representation of \(b\), we build our own circuit to deal with this problem.
+                
+            \subsubsection{Detecting the inequality}
+                The first idea for constructing the circuit is to add an ancilla qubit whose goal is to determine whether the two bits are equal:
+                
+                \begin{figure}[ht]
+                    \centering
+                    \begin{quantikz}[column sep=.6cm]
+                        \lstick{\ket{a_{1,1}}} & \octrl{3}\gategroup[wires=4, steps=2, style={dashed, rounded corners,fill=blue!20, inner xsep=2pt}, background, label style={label position=below, anchor=north, yshift=-.2cm}]{Inequality detection} & \octrl{3} & \qw & \qw & \octrl{2}\gategroup[wires=4, steps=1, style={dashed, rounded corners,fill=blue!20, inner xsep=2pt}, background, label style={label position=below, anchor=north, yshift=-.2cm}]{Result computation} & \qw & \qw & \octrl{3}\gategroup[wires=4, steps=2, style={dashed, rounded corners,fill=blue!20, inner xsep=2pt}, background, label style={label position=below, anchor=north, yshift=-.2cm}]{Uncomputation} & \octrl{3} & \qw\\
+                        \lstick{\ket{a_{i, j}}} & \qw & \ctrl{2} & \qw & \qw & \ctrl{1} & \qw & \qw & \ctrl{2} & \qw & \qw\\
+                        \lstick{Result \ket{0}} & \qw & \qw & \qw & \qw & \gate{\X} & \qw & \qw & \qw & \qw & \qw \\
+                        \lstick{Equal ancilla \ket{0}} & \gate{\X^{b_j}} & \gate{\X} & \qw & \qw & \ctrl{-1} & \qw & \qw & \gate{\X} & \gate{\X^{b_j}} & \qw
+                    \end{quantikz}
+                    \caption{First idea of a partial implementation of \(\mathbf{T}_\sigma\) using one ancilla qubit}
+                \end{figure}
+                
+                By doing so, the result qubit will be in the state \(\ket{1}\) if and only if \(b_{j}<a_{i, j}\). Note that if we want the result to be \ket{1} if \(b>a_i\), when \(a_i\geqslant\frac12\) for instance, we would replace the \(\X\) gate controlled on \(a_{i,j}\) by a \(\X^{b_j}\) gate. Of course, the problem is that it will be swapped once more if this situation happens once again.
             
-            \[\mathbf{T}_\sigma:\ket{t}\,\ket{0}\mapsto\begin{cases}\ket{t}\,\ket{1} &\text{if } t < \sigma\,\left(1-\frac\kappa2\right)\\\ket{t}\,\ket{0}&\text{otherwise}\end{cases}\,.\]
-            
-            In the original paper, \(\mathbf{T}_\sigma\) is applied on the second quantum register, which contains the approximation of the singular values of \(\mathbf{A}\). Hence, what we want to do is to design \(\mathbf{T}_\sigma\) so that it can be applied to the second register directly following the QPE. Let us consider an approximation \(\overline{\sigma_i}\) of a singular value of \(\mathbf{A}\). By definition:
-            
-            \[\overline{\sigma_i}=\cos\left(\frac{\theta_i}{2}\right)\,\|\mathbf{A}\|_F\]
-            
-            with \(\theta_i\in[-\pi\,;\,\pi[\). Since \(a_i\in[0\,;\,1[\), we can write:
-            
-            \[\theta_i = \begin{cases}2\,\pi\,a_i&\text{if }a_i\in\left[0\,;\,\frac12\right[\\2\,\pi\,\left(a_i-1\right)&\text{if }a_i\in\left[\frac12\,;\,1\right[\end{cases}\,.\]
-            
-            Indeed, for \(a_i\in\left[0\,;\,\frac12\right[\), \(\theta_i\) grows linearly from \(0\) to \(\pi\). At \(a_i=\frac12\), \(\theta_i\) grows linearly from \(-\pi\) to \(0\).
-            
-            Hence, the following holds:
-            
-            \begin{align*}
-                &\sigma_i < \sigma\,\left(1 - \frac\kappa2\right)\\
-                \iff&\cos\left(\frac{\theta_i}{2}\right) < \frac{\sigma\,\left(1 - \frac\kappa2\right)}{\|\mathbf{A}\|_F}\\
-                \iff&\exists k\in\mathbf{Z},\pm\frac{\theta_i}{2}\in\left]2\,k\,\pi + \arccos\left(\frac{\sigma\,\left(1 - \frac\kappa2\right)}{\|\mathbf{A}\|_F}\right)\,;\,2\,k\,\pi + \frac\pi2\right]\,.
-            \end{align*}
-            
-            Since \(\frac{\theta_i}{2}\in\left[-\frac\pi2\,;\,\frac\pi2\right[\), this is equivalent to:
-            
-            \[\sigma_i < \sigma\,\left(1 - \frac\kappa2\right)\iff\left|\frac{\theta_i}{2}\right|\in\left]\arccos\left(\frac{\sigma\,\left(1 - \frac\kappa2\right)}{\|\mathbf{A}\|_F}\right)\,;\,\frac\pi2\right]\,.\]
-            
-            By replacing \(\theta_i\) by its definition, this gives us:
-            
-            \[\sigma_i < \sigma\,\left(1 - \frac\kappa2\right)\iff\begin{cases}a_i\in\left]\frac1\pi\,\arccos\left(\frac{\sigma\,\left(1 - \frac\kappa2\right)}{\|\mathbf{A}\|_F}\right)\,;\,\frac12\right]&\text{if }a_i<\frac12\\1-a_i\in\left]\frac1\pi\,\arccos\left(\frac{\sigma\,\left(1 - \frac\kappa2\right)}{\|\mathbf{A}\|_F}\right)\,;\,\frac12\right]&\text{if }a_i\geqslant\frac12\end{cases}\,.\]
-            
-            Which gives us our final criteria:
-            
-            \[\sigma_i < \sigma\,\left(1 - \frac\kappa2\right)\iff\begin{cases}\frac1\pi\,\arccos\left(\frac{\sigma\,\left(1 - \frac\kappa2\right)}{\|\mathbf{A}\|_F}\right) < a_i&\text{if }a_i<\frac12\\1-\frac1\pi\,\arccos\left(\frac{\sigma\,\left(1 - \frac\kappa2\right)}{\|\mathbf{A}\|_F}\right) > a_i&\text{if }a_i\geqslant\frac12\end{cases}\,.\]
-                        
-            Since we know \(\sigma\) and \(\kappa\) beforehand, and since \(\|\mathbf{A}\|_F\) is easily accessible, we can compute \(b_1=\frac1\pi\,\arccos\left(\frac{\sigma\,\left(1 - \frac\kappa2\right)}{\|\mathbf{A}\|_F}\right)\) and \(b_2 = 1 - b_1\) efficiently and find their binary writing \(\overline{b_{1,1}b_{1, 2}\cdots b_{1,\lceil\log(n)\rceil}}^2\) and \(\overline{b_{2,1}b_{2, 2}\cdots b_{2,\lceil\log(n)\rceil}}^2\) representing them. Note that since \(\frac{\sigma\,\left(1 - \frac\kappa2\right)}{\|\mathbf{A}\|_F}\in]0\,;\,1]\), we have \(b_1\in\left[0\,;\,\frac12\right[\), hence \(b_{1,1}=0\) and \(b_{1,2}=1\).
-            
-            Let \(b\) represent either \(b_1\) or \(b_2\). The goal is now to compare \(b\) and \(a_i\) bitwise to determine which one is superior. We consider the state \(\ket{\overline{a_i}} = \ket{a_{i,2}\cdots a_{i,\lceil\log(n)\rceil}}\), which represents \(a_i\) if \(a_i<\frac12\), that is \(a_{i,1}=0\), and \(a_i-\frac12\) if \(a_i>\frac12\), that is \(a_{i, 1} = 1\). Hence, the algorithm will go through \(\lceil\log(n)\rceil - 1\) steps for each one of \(b_1\) and \(b_2\). Without loss of generality, we will for now consider the case \(a_i<\frac12\), that is \(b=b_1\). We identify each of the steps by the number of the bit it applies to. Hence, the first step is identified with \(2\) since there is no need to test the fist bit, the second one with \(3\) and the last one with \(\lceil\log(n)\rceil\). Hence, at step \(j\), the algorithm operates on qubit \ket{a_{i,j}} and bit \(b_j\).
-            
-            Some circuits already exist for quantum bit-string comparison. For instance \citeauthor{QBSC} and describes different circuits to do such a task in \cite{QBSC}. However, these circuits use a whole quantum register to store one of the two strings. In order to take advantage from the fact that we have a classical representation of \(b\), we build our own circuit to deal with this problem. 
-            
-            The first idea for constructing the circuit is to add an ancilla qubit whose goal is to determine whether the two bits are equal:
-            
-            \begin{figure}[ht]
-                \centering
-                \begin{quantikz}[column sep=.6cm]
-                    \lstick{\ket{a_{1,1}}} & \octrl{3}\gategroup[wires=4, steps=2, style={dashed, rounded corners,fill=blue!20, inner xsep=2pt}, background, label style={label position=below, anchor=north, yshift=-.2cm}]{Inequality detection} & \octrl{3} & \qw & \qw & \octrl{2}\gategroup[wires=4, steps=1, style={dashed, rounded corners,fill=blue!20, inner xsep=2pt}, background, label style={label position=below, anchor=north, yshift=-.2cm}]{Result computation} & \qw & \qw & \octrl{3}\gategroup[wires=4, steps=2, style={dashed, rounded corners,fill=blue!20, inner xsep=2pt}, background, label style={label position=below, anchor=north, yshift=-.2cm}]{Uncomputation} & \octrl{3} & \qw\\
-                    \lstick{\ket{a_{i, j}}} & \qw & \ctrl{2} & \qw & \qw & \ctrl{1} & \qw & \qw & \ctrl{2} & \qw & \qw\\
-                    \lstick{Result \ket{0}} & \qw & \qw & \qw & \qw & \gate{\X} & \qw & \qw & \qw & \qw & \qw \\
-                    \lstick{Equal ancilla \ket{0}} & \gate{\X^{b_j}} & \gate{\X} & \qw & \qw & \ctrl{-1} & \qw & \qw & \gate{\X} & \gate{\X^{b_j}} & \qw
-                \end{quantikz}
-                \caption{Idea of a partial implementation of \(\mathbf{T}_\sigma\) using one ancilla qubit}
-            \end{figure}
-            
-            By doing so, the result qubit will be in the state \(\ket{1}\) if and only if \(b_{j}<a_{i, j}\). Note that if we want the result to be \ket{1} if \(b>a_i\), when \(a_i\geqslant\frac12\) for instance, we would replace the \(\X\) gate controlled on \(a_{i,j}\) by a \(\X^{b_j}\) gate. Of course, the problem is that it will be swapped once more if this situation happens once again. Hence, we need another ancilla qubit to know whether the circuit already has determined that \(a_i>b\), as shown on the following:
-            
-            \begin{figure}[ht]
-                \centering
-                \begin{quantikz}[column sep=.6cm]
-                    \lstick{\ket{a_{1,1}}} & \octrl{3}\gategroup[wires=5, steps=2, style={dashed, rounded corners,fill=blue!20, inner xsep=2pt}, background, label style={label position=below, anchor=north, yshift=-.2cm}]{Inequality detection} & \octrl{3} & \qw & \octrl{4}\gategroup[wires=5, steps=2, style={dashed, rounded corners,fill=blue!20, inner xsep=2pt}, background, label style={label position=below, anchor=north, yshift=-.2cm}]{Result computation} & \octrl{2} & \qw\slice{\ket{\varphi}} & \qw & \octrl{3}\gategroup[wires=5, steps=2, style={dashed, rounded corners,fill=blue!20, inner xsep=2pt}, background, label style={label position=below, anchor=north, yshift=-.2cm}]{Uncomputation} & \octrl{3} & \qw\\
-                    \lstick{\ket{a_{i, j}}} & \qw & \ctrl{2} & \qw & \qw & \ctrl{1} & \qw & \qw & \ctrl{2} & \qw & \qw\\
-                    \lstick{Result \ket{0}} & \qw & \qw & \qw & \qw & \gate{\X} & \qw & \qw & \qw & \qw & \qw\\
-                    \lstick{Equal ancilla \ket{0}} & \gate{\X^{b_j}} & \gate{\X} & \qw & \ctrl{1} & \ctrl{-1} & \qw & \qw & \gate{\X} & \gate{\X^{b_j}} & \qw\\
-                    \lstick{Result found ancilla \ket{0}} & \octrl{-1} & \octrl{-1} & \qw & \gate{\X} & \qw & \qw & \qw & \octrl{-1} & \octrl{-1} & \qw
-                \end{quantikz}
-                \caption{Idea of a partial implementation of \(\mathbf{T}_\sigma\) using two ancilla qubits}
-            \end{figure}
-            
-            The idea is to test for the equality between the bits only when the cicruit hasn't already determined whether \(a_i>b\). But this design also has a flaw. Indeed, let us assume that the first inequality detected \(a_{i, j}\neq b_j\) is at bit \(j\). Now, we want to uncompute the state of the equal ancilla from \(\ket{1}\) to \(\ket{0}\). While the first intuition to do this is drawn on the circuit above, this implementation is incorrect. Indeed, we have:
-            
-            \[\ket{\varphi} = \ket{a_{i, j}}\,\ket{1^{b_j}}\,\ket{1}\,\ket{1}\]
-            
-            Hence, the \(\X\) and \(\X^{b_j}\) gates of the uncomputation steps won't be applied on the equal ancilla, since the result found ancilla is in the state \(\ket{1}\). Controlling on the value \ket{0} would not work either, since this would be applied at each following step, since the result found ancilla is supposed to stay in the state \ket{1}. Hence, we need to add another ancilla qubit whose goal is to store whether the result is set at the begininng of a step. This leads to another version of the partial implementation of \(\mathbf{T}_\sigma\):
-            
-            \begin{figure}[ht]
-                \centering
-                \begin{quantikz}
-                    \lstick{\ket{a_{1,1}}} & \octrl{3}\gategroup[wires=6, steps=2, style={dashed, rounded corners,fill=blue!20, inner xsep=2pt}, background, label style={label position=below, anchor=north, yshift=-.2cm}]{Inequality detection} & \octrl{3} & \qw & \octrl{5}\gategroup[wires=6, steps=3, style={dashed, rounded corners,fill=blue!20, inner xsep=2pt}, background, label style={label position=below, anchor=north, yshift=-.2cm}]{Result computation} & \octrl{4} & \octrl{2} & \qw & \octrl{3}\gategroup[wires=6, steps=2, style={dashed, rounded corners,fill=blue!20, inner xsep=2pt}, background, label style={label position=below, anchor=north, yshift=-.2cm}]{Uncomputation} & \octrl{3} & \qw\\
-                    \lstick{\ket{a_{i, j}}} & \qw & \ctrl{2} & \qw & \qw & \qw & \ctrl{1} & \qw & \ctrl{2} & \qw & \qw\\
-                    \lstick{Result \ket{0}} & \qw & \qw & \qw & \qw & \qw & \gate{\X} & \qw & \qw & \qw & \qw\\
-                    \lstick{Equal ancilla \ket{0}} & \gate{\X^{b_j}} & \gate{\X} & \qw & \octrl{2} & \ctrl{1} & \ctrl{-1} & \qw & \gate{\X} & \gate{\X^{b_j}} & \qw\\
-                    \lstick{Result found ancilla \ket{0}} & \octrl{-1} & \octrl{-1} & \qw & \ctrl{1} & \gate{\X} & \qw & \qw & \qw & \qw & \qw\\
-                    \lstick{Result set ancilla \ket{0}} & \qw & \qw & \qw & \gate{\X} & \qw & \qw & \qw & \octrl{-2} & \octrl{-2} & \qw
-                \end{quantikz}
-                \caption{Partial implementation of \(\mathbf{T}_\sigma\) using three ancilla qubits}
-            \end{figure}
-            
-            But there is still one problem: at the \(j+1\) step, the ancilla will change its value again, eventually changing other registers. Hence, we need an ancilla for every step, which can by symbolized with the following circuit:
-            
-            \begin{figure}[ht]
-                \centering
-                \begin{quantikz}
-                    \lstick{\ket{a_{1,1}}} & \octrl{3}\gategroup[wires=6, steps=2, style={dashed, rounded corners,fill=blue!20, inner xsep=2pt}, background, label style={label position=below, anchor=north, yshift=-.2cm}]{Inequality detection} & \octrl{3} & \qw & \octrl{5}\gategroup[wires=6, steps=3, style={dashed, rounded corners,fill=blue!20, inner xsep=2pt}, background, label style={label position=below, anchor=north, yshift=-.2cm}]{Result computation} & \octrl{4} & \octrl{2} & \qw & \octrl{3}\gategroup[wires=6, steps=2, style={dashed, rounded corners,fill=blue!20, inner xsep=2pt}, background, label style={label position=below, anchor=north, yshift=-.2cm}]{Uncomputation} & \octrl{3} & \qw\\
-                    \lstick{\ket{a_{i, j}}} & \qw & \ctrl{2} & \qw & \qw & \qw & \ctrl{1} & \qw & \ctrl{2} & \qw & \qw\\
-                    \lstick{Result \ket{0}} & \qw & \qw & \qw & \qw & \qw & \gate{\X} & \qw & \qw & \qw & \qw\\
-                    \lstick{Equal ancilla \ket{0}} & \gate{\X^{b_j}} & \gate{\X} & \qw & \octrl{2} & \ctrl{1} & \ctrl{-1} & \qw & \gate{\X} & \gate{\X^{b_j}} & \qw\\
-                    \lstick{Result found ancilla \ket{0}} & \octrl{-1} & \octrl{-1} & \qw & \ctrl{1} & \gate{\X} & \qw & \qw & \qw & \qw & \qw\\
-                    \lstick{Ancilla \(j\) \ket{0}} & \qw & \qw & \qw & \gate{\X} & \qw & \qw & \qw & \octrl{-2} & \octrl{-2} & \qw
-                \end{quantikz}
-                \caption{Partial implementation of \(\mathbf{T}_\sigma\) using \(\lceil\log(n)\rceil + 1\) ancilla qubits}
-            \end{figure}
-            
-            Note that aside from the Equal ancilla and the Result found ancilla, we only need \(n - 1\) ancilla qubits. This is due to the fact that the very first step does not need such an ancilla qubit, since we know that the Result found ancilla will be in state \ket{0}.
-            
-            Plus, since every operation is controlled on \(a_{i,1}\), we can simply concatenate the two circuits to use the same ancillas for the case \(a_i>\frac12\). At every step, \(7\) controlled gates are applied. Hence, the total complexity of this circuit is linear in the number of steps it makes, that is \(O(\log(n))\).
-            
-            There are still two corner cases which we need to tackle, that are the cases \(a_i=\frac12\) and \(a_i=b\). If \(a_i=\frac12\), it will only be considered by the second part of the circuit. Since \(b_1<\frac12\), we know that \(b_2>\frac12\). Hence, the second part will detect that \(b_2>a_i\) and outputs the state \ket{1}, which is what we desire. Concerning the case \(a_i=b\), the circuit will never detect an inequality. Hence, it will output the state \ket{0}, which is also what we want. Indeed, as a recall, we have:
-            
-            \[\sigma_i < \sigma\,\left(1 - \frac\kappa2\right)\iff\begin{cases}\frac1\pi\,\arccos\left(\frac{\sigma\,\left(1 - \frac\kappa2\right)}{\|\mathbf{A}\|_F}\right) < a_i&\text{if }a_i<\frac12\\1-\frac1\pi\,\arccos\left(\frac{\sigma\,\left(1 - \frac\kappa2\right)}{\|\mathbf{A}\|_F}\right) > a_i&\text{if }a_i\geqslant\frac12\end{cases}\,.\]
-            
-            In particular, \(a_i=b\) implies that \(\sigma_i \geqslant \sigma\,\left(1 - \frac\kappa2\right)\). As such, the output of \(\mathbf{T}_\sigma\) is to be \ket{0}.
-            
-            % TODO: Proof that the circuit gives the good output
+            \subsubsection{Maintining the result qubit in its state once the result has been found}
+                Hence, we need another ancilla qubit to know whether the circuit already has determined that \(a_i>b\). By controlling the operations on the result qubit by this new ancilla qubit, we avoid applying again a gate on it if the result is already known, as shown on the following:
+                
+                \begin{figure}[ht]
+                    \centering
+                    \begin{quantikz}[column sep=.6cm]
+                        \lstick{\ket{a_{1,1}}} & \octrl{3}\gategroup[wires=5, steps=2, style={dashed, rounded corners,fill=blue!20, inner xsep=2pt}, background, label style={label position=below, anchor=north, yshift=-.2cm}]{Inequality detection} & \octrl{3} & \qw & \octrl{4}\gategroup[wires=5, steps=2, style={dashed, rounded corners,fill=blue!20, inner xsep=2pt}, background, label style={label position=below, anchor=north, yshift=-.2cm}]{Result computation} & \octrl{2} & \qw\slice{\ket{\varphi}} & \qw & \octrl{3}\gategroup[wires=5, steps=2, style={dashed, rounded corners,fill=blue!20, inner xsep=2pt}, background, label style={label position=below, anchor=north, yshift=-.2cm}]{Uncomputation} & \octrl{3} & \qw\\
+                        \lstick{\ket{a_{i, j}}} & \qw & \ctrl{2} & \qw & \qw & \ctrl{1} & \qw & \qw & \ctrl{2} & \qw & \qw\\
+                        \lstick{Result \ket{0}} & \qw & \qw & \qw & \qw & \gate{\X} & \qw & \qw & \qw & \qw & \qw\\
+                        \lstick{Equal ancilla \ket{0}} & \gate{\X^{b_j}} & \gate{\X} & \qw & \ctrl{1} & \ctrl{-1} & \qw & \qw & \gate{\X} & \gate{\X^{b_j}} & \qw\\
+                        \lstick{Result found ancilla \ket{0}} & \octrl{-1} & \octrl{-1} & \qw & \gate{\X} & \qw & \qw & \qw & \octrl{-1} & \octrl{-1} & \qw
+                    \end{quantikz}
+                    \caption{Seoncd idea of a partial implementation of \(\mathbf{T}_\sigma\) using two ancilla qubits}
+                \end{figure}
+                
+                The idea is to test for the equality between the bits only when the cicruit hasn't already determined whether \(a_i>b\). But this design also has a flaw. Indeed, let us assume that the first inequality detected \(a_{i, j}\neq b_j\) is at bit \(j\). Now, we want to uncompute the state of the equal ancilla from \(\ket{1}\) to \(\ket{0}\). While the first intuition to do this is drawn on the circuit above, this implementation is incorrect. Indeed, we have:
+                
+                \[\ket{\varphi} = \ket{a_{i, j}}\,\ket{1^{b_j}}\,\ket{1}\,\ket{1}\]
+                
+                Hence, the \(\X\) and \(\X^{b_j}\) gates of the uncomputation steps won't be applied on the equal ancilla, since the result found ancilla is in the state \(\ket{1}\). Controlling on the value \ket{0} would not work either, since this would be applied at each following step, since the result found ancilla is supposed to stay in the state \ket{1}.
+                
+            \subsubsection{Uncomputing the equal ancilla}
+                Hence, we need to add another ancilla qubit whose goal is to store whether the result is set at the beginning of a step. By controlling the uncomputation gates on this qubit, we ensure to apply them only when it is necessary. This leads to another version of the partial implementation of \(\mathbf{T}_\sigma\):
+                
+                \begin{figure}[ht]
+                    \centering
+                    \begin{quantikz}
+                        \lstick{\ket{a_{1,1}}} & \octrl{3}\gategroup[wires=6, steps=2, style={dashed, rounded corners,fill=blue!20, inner xsep=2pt}, background, label style={label position=below, anchor=north, yshift=-.2cm}]{Inequality detection} & \octrl{3} & \qw & \octrl{5}\gategroup[wires=6, steps=3, style={dashed, rounded corners,fill=blue!20, inner xsep=2pt}, background, label style={label position=below, anchor=north, yshift=-.2cm}]{Result computation} & \octrl{4} & \octrl{2} & \qw & \octrl{3}\gategroup[wires=6, steps=2, style={dashed, rounded corners,fill=blue!20, inner xsep=2pt}, background, label style={label position=below, anchor=north, yshift=-.2cm}]{Uncomputation} & \octrl{3} & \qw\\
+                        \lstick{\ket{a_{i, j}}} & \qw & \ctrl{2} & \qw & \qw & \qw & \ctrl{1} & \qw & \ctrl{2} & \qw & \qw\\
+                        \lstick{Result \ket{0}} & \qw & \qw & \qw & \qw & \qw & \gate{\X} & \qw & \qw & \qw & \qw\\
+                        \lstick{Equal ancilla \ket{0}} & \gate{\X^{b_j}} & \gate{\X} & \qw & \octrl{2} & \ctrl{1} & \ctrl{-1} & \qw & \gate{\X} & \gate{\X^{b_j}} & \qw\\
+                        \lstick{Result found ancilla \ket{0}} & \octrl{-1} & \octrl{-1} & \qw & \ctrl{1} & \gate{\X} & \qw & \qw & \qw & \qw & \qw\\
+                        \lstick{Result set ancilla \ket{0}} & \qw & \qw & \qw & \gate{\X} & \qw & \qw & \qw & \octrl{-2} & \octrl{-2} & \qw
+                    \end{quantikz}
+                    \caption{Third idea of a partial implementation of \(\mathbf{T}_\sigma\) using three ancilla qubits}
+                \end{figure}
+                
+                But there is still one problem: at the \(j+1\) step, the ancilla will change its value again, eventually changing other registers.
+            \subsubsection{Uncompute the equal qubit using more ancillas}
+                To solve this problem, we can define an ancilla for every step and let them be thereafter. Then, the only need to take into account is to prove that the result qubit is not entangled with these ancillas, to ensure to have a correct measurement. Hence, we need an ancilla for every step, which can by symbolized with the following circuit:
+                
+                \begin{figure}[ht]
+                    \centering
+                    \begin{quantikz}
+                        \lstick{\ket{a_{1,1}}} & \octrl{3}\gategroup[wires=6, steps=2, style={dashed, rounded corners,fill=blue!20, inner xsep=2pt}, background, label style={label position=below, anchor=north, yshift=-.2cm}]{Inequality detection} & \octrl{3} & \qw & \octrl{5}\gategroup[wires=6, steps=3, style={dashed, rounded corners,fill=blue!20, inner xsep=2pt}, background, label style={label position=below, anchor=north, yshift=-.2cm}]{Result computation} & \octrl{4} & \octrl{2} & \qw & \octrl{3}\gategroup[wires=6, steps=2, style={dashed, rounded corners,fill=blue!20, inner xsep=2pt}, background, label style={label position=below, anchor=north, yshift=-.2cm}]{Uncomputation} & \octrl{3} & \qw\\
+                        \lstick{\ket{a_{i, j}}} & \qw & \ctrl{2} & \qw & \qw & \qw & \ctrl{1} & \qw & \ctrl{2} & \qw & \qw\\
+                        \lstick{Result \ket{0}} & \qw & \qw & \qw & \qw & \qw & \gate{\X} & \qw & \qw & \qw & \qw\\
+                        \lstick{Equal ancilla \ket{0}} & \gate{\X^{b_j}} & \gate{\X} & \qw & \octrl{2} & \ctrl{1} & \ctrl{-1} & \qw & \gate{\X} & \gate{\X^{b_j}} & \qw\\
+                        \lstick{Result found ancilla \ket{0}} & \octrl{-1} & \octrl{-1} & \qw & \ctrl{1} & \gate{\X} & \qw & \qw & \qw & \qw & \qw\\
+                        \lstick{Ancilla \(j\) \ket{0}} & \qw & \qw & \qw & \gate{\X} & \qw & \qw & \qw & \octrl{-2} & \octrl{-2} & \qw
+                    \end{quantikz}
+                    \caption{Final version of the implementation of \(\mathbf{T}_\sigma\) using \(\lceil\log(n)\rceil + 1\) ancilla qubits}
+                \end{figure}
+                
+                Note that aside from the Equal ancilla and the Result found ancilla, we only need \(n - 1\) ancilla qubits. This is due to the fact that the very first step does not need such an ancilla qubit, since we know that the Result found ancilla will be in state \ket{0}.
+                
+                Plus, since every operation is controlled on \(a_{i,1}\), we can simply concatenate the two circuits to use the same ancillas for the case \(a_i>\frac12\). At every step, \(7\) controlled gates are applied. Hence, the total complexity of this circuit is linear in the number of steps it makes, that is \(O(\log(n))\).
+                
+                There are still two corner cases which we need to tackle, that are the cases \(a_i=\frac12\) and \(a_i=b\). If \(a_i=\frac12\), it will only be considered by the second part of the circuit. Since \(b_1<\frac12\), we know that \(b_2>\frac12\). Hence, the second part will detect that \(b_2>a_i\) and outputs the state \ket{1}, which is what we desire. Concerning the case \(a_i=b\), the circuit will never detect an inequality. Hence, it will output the state \ket{0}, which is also what we want. Indeed, as a recall, we have:
+                
+                \[\sigma_i < \sigma\,\left(1 - \frac\kappa2\right)\iff\begin{cases}\frac1\pi\,\arccos\left(\frac{\sigma\,\left(1 - \frac\kappa2\right)}{\|\mathbf{A}\|_F}\right) < a_i&\text{if }a_i<\frac12\\1-\frac1\pi\,\arccos\left(\frac{\sigma\,\left(1 - \frac\kappa2\right)}{\|\mathbf{A}\|_F}\right) > a_i&\text{if }a_i\geqslant\frac12\end{cases}\,.\]
+                
+                In particular, \(a_i=b\) implies that \(\sigma_i \geqslant \sigma\,\left(1 - \frac\kappa2\right)\). As such, the output of \(\mathbf{T}_\sigma\) is to be \ket{0}.
+                
+                % TODO: Proof that the circuit gives the good output
 
     \section{Conclusion}            
         Global QSVET:
