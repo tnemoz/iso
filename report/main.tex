@@ -18,7 +18,7 @@
     \begin{abstract}
         In this work, we design a generic quantum circuit to implement a recommendation system following the algorithm of \citeauthor{QRS}. This algorithm takes as input a \(m\times n\) binary matrix which has a good rank-\(k\) approximation and returns a product recommendation for an user in time \(O(\log(k)\,\polylog(m\,n))\).
         
-        We discuss the limitations of implementing this algorithm on a real quantum computer and the differences between the high-level description of the algorithm and its low-level implementation. In particular, our implementation's complexity matches the original algorithm' one of \(O(\polylog(m\,n)\,\poly(k))\), but succeeds with only a probability of \(1-\frac{1}{\log(m\,n)}\), where the original algorithm succeeds with probability \(1 - \frac{1}{\poly(m\,n)}\).
+        We discuss the limitations of implementing this algorithm on a real quantum computer and the differences between the high-level description of the algorithm and its low-level implementation.
     \end{abstract}
     
     \section{Introduction}
@@ -28,9 +28,11 @@
         
         HHL algorithm was one of the first algorithms to use Quantum Computing for solving a Machine Learning problem. Other followed and papers have continued to be published to apply Quantum Computing to specific Machine Learning tasks like Deep Convolutional Neural Networks \cite{QCNN}.
         
-        In this context, \citeauthor{QRS} proposed in 2016 a quantum algorithm for a recommendation system which provided a solution with an exponential speed-up gain in time complexity regarding classical solutions at that time.
+        In a similar way of the P=NP problem, we currently do not know how to determine whether a problem is only solvable in logarithmic complexity with a quantum computer. For instance, Shor's algorithm \cite{Shor} does not have a classical equivalent that matches its complexity yet. However, a recent paper from \citeauthor{Dequantized} shows that the Quantum Recommandation system is not one of those. Indeed, they provide a classical algorithm for doing the same task classically in time complexity \(O(\poly(k)\,\log(m\,n))\), which is only polynomially slower than its quantum equivalent. Still, the goal of this paper is to highlight the differences between the theoretic implementation of an algorithm and its real-world implementation, and the Quantum Recommendation System algorithm is a good example for this purpose.
         
-        We present a generic quantum circuit for implementing this algorithm so that it can be easily reproducible using any framework, given an implementation of a Quantum RAM, that is, a general circuit made of elementary gates that matches the original algorithm. Because of the limitations of the quantum hardware, which are discussed in \autoref{subsec:Hardware}, only a limited set of gates can be used. Furthermore, some operations used in the original algorithm are not currently possible to implement on a quantum computer. For such problems, we present workarounds that leave the complexity untouched but cut the probability of success of the algorithm.
+        In this context, \citeauthor{QRS} proposed in 2016 a quantum algorithm for a recommendation system which provided a solution with an exponential speed-up gain in time complexity regarding classical solutions at that time. Indeed, the classical solutions required to compute a \(m\times n\) matrix from which the recommendations were made \cite{Amazon}, which means that their complexity was at least \(O(m\,n)\). The algorithm described in \cite{QRS} by \citeauthor{QRS} however, has a time complexity of \(O(\log(k)\,\polylog(m\,n))\). Since it does not have to write down neither the entire matrix nor even a row vector from this matrix, it is not subject to the same linear complexity as its classical equivalent.
+        
+        We present a generic quantum circuit for implementing this algorithm so that it can be easily reproducible using any framework, given an implementation of a Quantum RAM, that is, a general circuit made of elementary gates that matches the original algorithm. Because of the limitations of the quantum hardware, which are discussed in \autoref{subsec:Hardware}, only a limited set of gates can be used. Furthermore, some operations used in the original algorithm are not currently possible to implement on a quantum computer. For such problems, we present workarounds that leave the complexity untouched but cut the probability of success of the algorithm. As a consequence, our implementation's complexity matches the original algorithm' one of \(O(\polylog(m\,n)\,\poly(k))\), but succeeds with only a probability of \(1-\frac{1}{\log(m\,n)}\), where the original algorithm succeeds with probability \(1 - \frac{1}{\poly(m\,n)}\).
         
         Hence, our goal is to present the differences between a theoretic implementation of the algorithm of \citeauthor{QRS} and a currently real one.
         
@@ -591,7 +593,8 @@
                 
                 % TODO: Proof that the circuit gives the good output
 
-    \section{Conclusion}            
+    \section{Conclusion}
+    % TODO: Dequantized algorithms, number of qubits, cut in probability, acknowledgements
         Global QSVET:
         
         \begin{quantikz}
