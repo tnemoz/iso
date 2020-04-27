@@ -313,7 +313,16 @@
                     
                     The actual implementation of the \(\mathbf{QPE}\) gate using \(\mathbf{QFT}^\dagger\) is well-known in the literature, and presented for instance in \cite{QPE}. Furthermore, this implementation will be discussed in \autoref{subsec:ImplementingQPE}. For this reason, we deliberately chose not to show it here.
                 \end{definition}
-
+                
+                Finally, we will need to apply an arbitrary function on a quantum state. Since a quantum gate has to be reversible, there is a common trick to define such a gate.
+                
+                \begin{definition}[Gate of a real function]
+                    Let \(f:\{0\,;\,1\}^n\to\{0\,;\,1\}^m\) be an arbitrary function on bit strings. Then, the gate:
+                    
+                    \[\mathbf{U}_f:\ket{x}\,\ket{y}\mapsto\ket{x}\ket{x\oplus y}\]
+                    
+                    is unitary. Its complexity depends on \(f\).
+                \end{definition}
 
         \subsection{Quantum hardware considerations}
             \label{subsec:Hardware}
@@ -346,24 +355,27 @@
             
             In classical approaches at that time, an SVD decomposition was performed on the reconstructed preference matrix. The, by keeping only the \(k\) largest singular values, a rank-\(k\) matrix was obtained and used for making predictions. This approach is polynomial in the parameters of the preference matrix \(m\) and \(n\). The problem is that the reconstructed matrix has to be recomputed each time a user rates a new product. The problem is that the rank-\(k\) matrix had to be computed before getting a result from it. The principle of the algorithm of \citeauthor{QRS} is therefore to sample from this reconstructed matrix to get a recommendation once in polylogarithmic time.
         \subsection{A quantum algorithm as a recommendation system}
-            The following describes the algorithm presented in \cite{QRS}. This section intends to give a hogh-level overview of this algorithm. Its actual implementation is discussed in \autoref{sec:QCircuit}. Let \(\mathbf{P}\in\{0\,;\,1\}^{m\times n}\) a matrix that has a good rank-\(k\) approximation. That is:
+            The following describes the algorithm presented in \cite{QRS}. This section intends to give a hogh-level overview of this algorithm. Its actual implementation is discussed in \autoref{sec:QCircuit}. Let \(\mathbf{P}\in\{0\,;\,1\}^{m\times n}\) a matrix that has a good rank-\(k\) approximation. That is, for a given approximation parameter \(\varepsilon\):
             
-            \[\exists\varepsilon\in\mathbf{R}_+^*,\exists\hat{\mathbf{P}},\left\|\mathbf{P} - \hat{\mathbf{P}}\right\|_F\leqslant\varepsilon\|\mathbf{P}\|_F\,.\]
+            \[\exists\hat{\mathbf{P}},\left\|\mathbf{P} - \mathbf{P}_k\right\|_F\leqslant\varepsilon\|\mathbf{P}\|_F\]
+            
+            where \(\mathbf{P}_k\) is the matrix obtained by keeping only the \(k\) largest singular values in the SVD decomposition of \(\mathbf{P}\).
             
             Let \(\eta\in\mathbf{R}_+^*\). Then we define the matrix \(\hat{\mathbf{P}}\) as:
             
-            \[\forall(i, j)\in\llbracket1\,;\,m\rrbracket\times\llbracket1\,;\,n\rrbracket,\hat{\mathbf{P}}_i,j\overset{\text{\tiny{def}}}{=}\begin{cases}\mathbf{P}_i,j&\text{with probability } \frac{16\,n}{\eta\,\|\mathbf{P}\|_F}\\0&\text{with probability } 1-\frac{16\,n}{\left(\eta\,\|\mathbf{P}\|_F\right)^2}\end{cases}\,.\]
+            \[\forall(i, j)\in\llbracket1\,;\,m\rrbracket\times\llbracket1\,;\,n\rrbracket,\hat{\mathbf{P}}_i,j\overset{\text{\tiny{def}}}{=}\begin{cases}\mathbf{P}_i,j\,\frac{\eta\,\|\mathbf{P}\|_F}{16\,n}&\text{with probability } \frac{16\,n}{\eta\,\|\mathbf{P}\|_F}\\0&\text{with probability } 1-\frac{16\,n}{\left(\eta\,\|\mathbf{P}\|_F\right)^2}\end{cases}\,.\]
             
             Once \(\hat{\mathbf{P}}\) has been built, the algorithm adds every new information it gets after every products it recommends, to it. Hence, the definition above is only used to initialize \(\hat{\mathbf{P}}\).
             
-            Let \(k\) be the index of the row we want to sample. That is, we want a recommendation for user \(k\). Then the algorithm operates in several steps, which we describe in the following.
+            Let \(j\) be the index of the row we want to sample. That is, we want a recommendation for user \(j\). Then the algorithm operates in several steps, which we describe in the following.
             
             \subsubsection{Loading the row vector as a quantum state}
-                The first thing to do is to load a quantum state that corresponds to \(\hat{\mathbf{P}}_i\). That is, we want to create:
+                \label{subsubsec:Loading}
+                The first thing to do is to load a quantum state that corresponds to \(\hat{\mathbf{P}}_j\). That is, we want to create:
                 
-                \[\ket{\hat{\mathbf{P}}_i} \overset{\text{\tiny{def}}}{=} \sum_{i=1}^{\lceil\log(n)\rceil}\hat{\mathbf{P}}_{k,i}\,\ket{i}\,.\]
+                \[\ket{\hat{\mathbf{P}}_j} \overset{\text{\tiny{def}}}{=} \sum_{i=0}^{\lceil\log(n)\rceil-1}\hat{\mathbf{P}}_{j,i + 1}\,\ket{i}\,.\]
                 
-                The problem is hence to load in logarithmic time a quantum state corresponding to a vector stored in a classical data structure. This is done via the use of QRAM, as described in \autoref{subsec:QRAM}.
+                The problem is hence to load in logarithmic time a quantum state corresponding to a vector stored in a classical data structure. This is done via the use of QRAM, as described in \autoref{subsec:LoadingQRAM}.
                 
                 We denote the SVD decomposition of \(\hat{\mathbf{P}}\) as:
                 
@@ -430,12 +442,78 @@
                 
                 \[\sum_{i\in\mathcal{S}}\alpha_i\,\ket{v_i}\,\ket{0} + \sum_{i\in\overline{\mathcal{S}}}\alpha_i\,\ket{v_i}\,\ket{1}\,.\]
                 
-                We then measure the second register in the computational basis. If the outcome is \ket{1}, then we redo everything. If it is \ket{0}, then we measure the first register in the computational basis to get a product \(j\).
+                We then measure the second register in the computational basis. If the outcome is \ket{1}, then we redo everything. If it is \ket{0}, then we measure the first register in the computational basis to get a product for user \(j\).
                 
     \section{Designing a quantum circuit for a recommendation system}
         \label{sec:QCircuit}
+        We now design a quantum circuit to perform the algorithm of \citeauthor{QRS}. Let \(\mathbf{P}\) be the black box preference matrix. As a recall, we define \(\hat{\mathbf{P}}\) as:
+        
+        \[\forall(i, j)\in\llbracket1\,;\,m\rrbracket\times\llbracket1\,;\,n\rrbracket,\hat{\mathbf{P}}_i,j\overset{\text{\tiny{def}}}{=}\begin{cases}\mathbf{P}_i,j\,\frac{\eta\,\|\mathbf{P}\|_F}{16\,n}&\text{with probability } \frac{16\,n}{\eta\,\|\mathbf{P}\|_F}\\0&\text{with probability } 1-\frac{16\,n}{\left(\eta\,\|\mathbf{P}\|_F\right)^2}\end{cases}\,.\]
+        
+        \(\hat{\mathbf{P}}\) is assumed to be known at the beginning of the algorithm. It is also assumed that, by denoting \(\mathbf{P}_k\) the matrix obtained by keeping only the \(k\) largest singular values in the SVD decomposition of \(\mathbf{P}\):
+        
+        \[\left\|\mathbf{P}-\mathbf{P}_k\right\|_F\leqslant\varepsilon\,\|\mathbf{P}\|_F\]
+        
+        for a small rank \(k\) (generally lower than 100) and an approximation parameter \(\varepsilon\), both known beforehand. We also consider an index \(j\) to get a recommendation from.
+        
+        As explained in \autoref{subsubsec:Loading}, the very first step is to load in logarithmic time the state:
+        
+        \[\ket{\hat{\mathbf{P}}_j} \overset{\text{\tiny{def}}}{=} \sum_{i=0}^{\lceil\log(n)\rceil-1}\hat{\mathbf{P}}_{j,i + 1}\,\ket{i}\,.\]
+        
         \subsection{Loading from QRAM}
-            \label{subsec:QRAM}
+            \label{subsec:LoadingQRAM}
+            In order to load a quantum state from a real vector, \citeauthor{QRS} make use of Quantum RAM, also denoted QRAM. The principle is to have a classical data structure with quantum access, that is, a data structure from which we can get information by querying it with a quantum state, potentially in superposition.
+            
+            While some general-purpose QRAM circuit has been stud, for instance in \cite{QRAMCircuit}, we will describe a design specially designed for state creation, described by \citeauthor{Prakash} in \cite{Prakash}.
+            
+            \subsubsection{Designing Quantum RAM}
+                \label{subsubsec:QRAM}
+                Let \(\mathbf{x}\in\mathbf{R}^p\) be a real vector.
+                
+                The QRAM structure is a binary tree with \(2^{\left\lceil\log_2(p)\right\rceil}\) leaves with the following properties:
+                
+                \begin{enumerate}
+                    \item The leaf number \(i\) stores the value \(x_i^2\), along with the sign of \(x_i\). Potential additional leaves stores the value \(0\). 
+                    \item Each node stores the sum of the values of its two childrens.
+                \end{enumerate}
+                
+                Hence, the root stores \(\sum_ix_i^2=\|\mathbf{x}\|^2\). For instance, with:
+                
+                \[\mathbf{x}=\begin{pmatrix}0.2\\-0.15\\0.1\\ -0.1\\0\\0.3\end{pmatrix}\]
+                
+                the QRAM tree would be:
+                
+                \begin{figure}[ht]
+                    \centering
+                    \begin{forest}
+                        for tree={circle,draw, minimum size=1.5cm, inner sep=1pt, l sep=1.5cm}
+                        [0.1725 
+                            [0.0825, edge label={node[midway, fill=white] {0}}
+                                [0.0625, edge label={node[midway, fill=white] {00}}
+                                    [{$0.04, +$}, edge label={node[midway, fill=white] {000}}]
+                                    [{$0.0225, -$}, edge label={node[midway, fill=white] {001}}]
+                                ]
+                                [0.02, edge label={node[midway, fill=white] {01}}
+                                    [{$0.01, +$}, edge label={node[midway, fill=white] {010}}]
+                                    [{$0.01, -$}, edge label={node[midway, fill=white] {011}}]
+                                ]
+                            ]
+                            [0.09, edge label={node[midway, fill=white] {1}}
+                                [0.09, edge label={node[midway, fill=white] {10}}
+                                    [{$0, +$}, edge label={node[midway, fill=white] {100}}]
+                                    [${0.09, +}$, edge label={node[midway, fill=white] {101}}]
+                                ]
+                                [0, edge label={node[midway, fill=white] {11}}
+                                    [{$0, +$}, edge label={node[midway, fill=white] {110}}]
+                                    [{$0, +$}, edge label={node[midway, fill=white] {111}}]
+                                ]
+                            ] 
+                        ]
+                        \end{forest}
+                    \caption{An example of a QRAM tree}
+                \end{figure}
+
+
         \subsection{Applying the Quantum Phase Estimation algorithm}
             \label{subsec:ImplementingQPE}
             Now that the state \ket{x} has been loaded from QRAM, we are to append a quantum register of size \(\lceil\log(n)\rceil\) before the quantum register in which \ket{x} has been loaded and to apply a unitary \(\mathbf{Q}\) to get the state:
