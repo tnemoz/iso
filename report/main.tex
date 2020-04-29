@@ -7,7 +7,7 @@
 \newcommand{\cid}{01811909}
 \date{April 30, 2020}
 
-\author{Tristan \textsc{Nemoz}\\Imperial College London\\MSc Computing (Security \& Reliability\\\href{mailto:tristan.nemoz19@imperial.ac.uk}{\texttt{tristan.nemoz19@imperial.ac.uk}}}
+\author{Tristan \textsc{Nemoz}\\Imperial College London\\MSc Computing (Security \& Reliability)\\\href{mailto:tristan.nemoz19@imperial.ac.uk}{\texttt{tristan.nemoz19@imperial.ac.uk}}}
 \title{A generic quantum circuit for a recommendation system}
 
 \input{includes} % various packages needed for maths etc.
@@ -18,21 +18,21 @@
     \begin{abstract}
         In this work, we design a generic quantum circuit to implement a recommendation system following the algorithm of \citeauthor{QRS}. This algorithm takes as input a \(m\times n\) binary matrix which has a good rank-\(k\) approximation and returns a product recommendation for an user in time \(O(\log(k)\,\polylog(m\,n))\).
         
-        We discuss the limitations of implementing this algorithm on a real quantum computer and the differences between the high-level description of the algorithm and its low-level implementation. In particular, we discuss on the reasons that could improve our design's complexity in the future.
+        We discuss the limitations of implementing this algorithm on a real quantum computer and the differences between the high-level description of the algorithm and its low-level implementation. In particular, we discuss the reasons that could improve our design's complexity in the future.
     \end{abstract}
     
     \section{Introduction}
         In spite of the lack of actual quantum computers, quantum computing has been studied for several dozens of year because of its promising results. Since the proposal of an algorithm for prime factorization \cite{Shor} by \citeauthor{Shor} in 1997, several other quantum algorithms were designed to provide a solution to classical problems with an exponential speed-up in complexity.
         
-        Amongst them is the HHL algorithm \cite{HHL} whose goal is to solve a linear system \(\mathbf{A}\,\mathbf{x}=\mathbf{y}\) where \(\mathbf{A}\in\mathbf{R}^{n\times n}\) in time \(O\left(\log(n)\,\kappa^2\right)\), \(\kappa\) being the condition number of \(\mathbf{A}\). Further studies of this algorithm generalized its routines to apply them to other problems. For instance, creating efficiently a quantum state \(\ket{x}\) corresponding to a real vector \(\mathbf{x}\in\mathbf{R}^n\), which is essential to use the algorithm, has been found to be possible using Quantum RAM \cite{Prakash, QRAM, QRAMCircuit}.
+        Amongst them is the HHL algorithm \cite{HHL} whose goal is to solve a linear system \(\mathbf{A}\,\mathbf{x}=\mathbf{y}\) where \(\mathbf{A}\in\mathbf{R}^{n\times n}\) in time \(O\left(\log(n)\,\kappa^2\right)\), \(\kappa\) being the condition number of \(\mathbf{A}\). Further studies of this algorithm generalized its routines to apply them to other problems. For instance, creating efficiently a quantum state \(\ket{x}\) corresponding to a real vector \(\mathbf{x}\in\mathbf{R}^n\), which is essential to use the algorithm, has been found possible using Quantum RAM \cite{Prakash, QRAM, QRAMCircuit}.
         
         HHL algorithm was one of the first algorithms to use Quantum Computing for solving a Machine Learning problem. Other followed and papers have continued to be published to apply Quantum Computing to specific Machine Learning tasks like Deep Convolutional Neural Networks \cite{QCNN}.
         
-        In a similar way of the P=NP problem, we currently do not know how to determine whether a problem is only solvable in logarithmic complexity with a quantum computer. For instance, Shor's algorithm \cite{Shor} does not have a classical equivalent that matches its complexity yet. However, a recent paper from \citeauthor{Dequantized} shows that the Quantum Recommendation system is not one of those. Indeed, they provide a classical algorithm for doing the same task classically in time complexity \(O(\poly(k)\,\log(m\,n))\), which is only slower by a polynomial factor than its quantum equivalent. Still, the goal of this paper is to highlight the differences between the theoretic implementation of an algorithm and its real-world implementation, and the Quantum Recommendation System algorithm is a good example for this purpose.
+        Similarly to the P=NP problem, we currently do not know how to determine whether a problem is only solvable in logarithmic complexity with a quantum computer. For instance, Shor's algorithm \cite{Shor} does not have a classical equivalent that matches its complexity yet. However, a recent paper from \citeauthor{Dequantized} shows that the Quantum Recommendation system is not one of those. Indeed, they provide a classical algorithm for doing the same task classically in time complexity \(O(\poly(k)\,\log(m\,n))\), which is only slower by a polynomial factor than its quantum equivalent. Still, the goal of this paper is to highlight the differences between the theoretic implementation of an algorithm and its real-world implementation, and the Quantum Recommendation System algorithm is a good example for this purpose.
         
         In this context, \citeauthor{QRS} proposed in 2016 a quantum algorithm for a recommendation system which provided a solution with an exponential speed-up gain in time complexity regarding classical solutions at that time. Indeed, the classical solutions required to compute a \(m\times n\) matrix from which the recommendations were made \cite{Amazon}, which means that their complexity was at least \(O(m\,n)\). The algorithm described in \cite{QRS} by \citeauthor{QRS} however, has a time complexity of \(O(\log(k)\,\polylog(m\,n))\). Since it does not have to write down neither the entire matrix nor even a row vector from this matrix, it is not subject to the same linear complexity as its classical equivalent.
         
-        We present a generic quantum circuit for implementing this algorithm so that it can be easily reproducible using any framework, given an implementation of a Quantum RAM, that is, a general circuit made of elementary gates that matches the original algorithm. Because of the limitations of the quantum hardware, which are discussed in \autoref{subsec:Hardware}, only a limited set of gates can be used. Furthermore, some operations used in the original algorithm are not currently possible to implement on a quantum computer. For such problems, we present workarounds that leave the complexity untouched but cut the probability of success of the algorithm. One problem couldn't be tackled though, which is the lack of an actual quantum ram implementation. As a consequence, our implementation's complexity matches the original algorithm' one of \(O(\polylog(m\,n)\,\poly(k))\) if and only if the Quantum RAM can be accessed in a superposed state, and succeeds with only a probability of \(1-\frac{1}{\log(m\,n)}\), where the original algorithm succeeds with probability \(1 - \frac{1}{\poly(m\,n)}\).
+        We present a generic quantum circuit for implementing this algorithm so that it is easily reproducible using any framework, given an implementation of a Quantum RAM, that is, a general circuit made of elementary gates that matches the original algorithm. Because of the limitations of the quantum hardware, which are discussed in \autoref{subsec:Hardware}, only a limited set of gates can be used. Furthermore, some operations used in the original algorithm are not currently possible to implement on a quantum computer. For such problems, we present workarounds that leave the complexity untouched but cut the probability of success of the algorithm. One problem couldn't be tackled though, which is the lack of an actual quantum ram implementation. As a consequence, our implementation's complexity matches the original algorithm's one of \(O(\polylog(m\,n)\,\poly(k))\) if and only if the Quantum RAM can be accessed in a superposed state, and succeeds with only a probability of \(1-\frac{1}{\log(m\,n)}\), where the original algorithm succeeds with probability \(1 - \frac{1}{\poly(m\,n)}\).
         
         Hence, our goal is to present the differences between a theoretic implementation of the algorithm of \citeauthor{QRS} and a currently real one.
         
@@ -85,7 +85,7 @@
                 
                 \[\left(\mathbf{U}_1\otimes\mathbf{U}_2\right)\,\left(\ket{\varphi}\otimes\ket{\psi}\right)\,.\]
                 
-                To make an analogy with classical computing, a quantum algorithm encodes information as a tensor product of several qubits, apply one or more quantum gates to them, and then read out the result. Both the input and the output of a quantum algorithm is a tensor product of qubits, each possibly in a superposed state.
+                To make an analogy with classical computing, a quantum algorithm encodes information as a tensor product of several qubits, applies one or more quantum gates to them, and then read out the result. Both the input and the output of a quantum algorithm are a tensor product of qubits, each possibly in a superposed state.
                 
                 The big difference with classical computing however, is that every operation performed on a quantum state is reversible, since every operation is represented by a unitary, hence invertible, matrix. The only exception to this rule is the reading operation, also called the Measurement operation, described in \autoref{subsubsec:Measurement}.
             \subsubsection{Quantum circuit}
@@ -100,7 +100,7 @@
                     \caption{An example of a quantum circuit}
                 \end{figure}
                 
-                or equivalently, since \(\mathbf{U}_1\otimes\mathbf{U}_2\) is a \(2^2\times2^2\) unitary matrix, and as such is a quantum gate that operates on two qubits:
+                or equivalently, since \(\mathbf{U}_1\otimes\mathbf{U}_3\) is a \(2^2\times2^2\) unitary matrix, and as such is a quantum gate that operates on two qubits:
                 
                 \begin{figure}[ht]
                     \centering
@@ -111,7 +111,7 @@
                     \caption{An example of a quantum circuit with a gate applied on several qubits}
                 \end{figure}
                 
-                It is possible to apply a gate on a given qubit \ket{y} only if another qubit is in the state \ket{1}. Such a gate is called a controlled gate. Let us take the following circuit as an example:
+                It is possible to apply a gate on a given qubit \ket{y} conditionally to the fact that another qubit is in the state \ket{1}. Such a gate is called a controlled gate, or a conditioned gate. Let us take the following circuit as an example:
                 
                 \begin{figure}[ht]
                     \centering
@@ -119,7 +119,7 @@
                             \lstick{\ket{x}} & \ctrl{1} & \qw\\
                             \lstick{\ket{y}} & \gate{\X}  & \qw &
                         \end{quantikz}
-                    \caption{An example of a quantum circuit with a conditoned gate}
+                    \caption{An example of a quantum circuit with a conditioned gate}
                 \end{figure}
                 
                 Here, \(\X\) is the Pauli \(\X\)-gate, which will be extensively used throughout this document:
@@ -128,9 +128,9 @@
                 
                 \(\X\) is also called the NOT gate, since it maps the state \ket{0} to the state \ket{1} and reciprocally. Let us write \ket{x} as \(\ket{x}=x_1\,\ket{0}+x_2\ket{1}\) and \ket{y} as \(y_1\,\ket{0} + y_2\,\ket{1}\). Then the global quantum state at the beginning of this circuit is given by:
                 
-                \[\ket{x}\otimes\ket{y} = x_1\,y_1\,\ket{00} + x_1\,y_2\,\ket{01} + x2\,y_1\,\ket{10} + x_2\,y_2\,\ket{11}\,.\]
+                \[\ket{x}\otimes\ket{y} = x_1\,y_1\,\ket{00} + x_1\,y_2\,\ket{01} + x_2\,y_1\,\ket{10} + x_2\,y_2\,\ket{11}\,.\]
                 
-                Applying \(\X\) conditioned on \ket{x} means that the gate will be applied on the parts of the state that have \ket{0} on their first qubits. Hence, the resulting state of this circuit is:
+                Applying \(\X\) conditioned on \ket{x} means that the gate will be applied on the parts of the state that have \ket{1} on their first qubit. Hence, the resulting state of this circuit is:
                 
                 \[x_1\,y_1\,\ket{00} + x_1\,y_2\,\ket{01} + x2\,y_2\,\ket{10} + x_2\,y_1\,\ket{11}\,.\]
                 
@@ -154,7 +154,7 @@
                 
                 \[\ket{x} = \sum_{k=1}^n\alpha_k\,\ket{k}\]
                 
-                with \(\alpha_k\in\mathbf{C}\) for \(k\in\llbracket1\,;\,n\rrbracket\). Measuring \ket{x} in the computational basis means projecting \ket{x} onto one vector of the computational basis of \(\mathbf{C}^{2^n}\). Measuring is the only operator that one is allowed to apply on a quantum state that is not unitary. The state onto which \ket{x} is mapped is randomly determined by its associated coefficient. More clearly, \ket{x} will be mapped on the state \ket{k} with probability \(\alpha_k\,\overline{\alpha_k}\). The measurement allows us to classically known onto which state \ket{x} has been projected. The representation of a measurement in a quantum circuit is the following:
+                with \(\alpha_k\in\mathbf{C}\) for \(k\in\llbracket1\,;\,n\rrbracket\). Measuring \ket{x} in the computational basis means projecting \ket{x} onto one vector of the computational basis of \(\mathbf{C}^{2^n}\). Measuring is the only operator that one is allowed to apply on a quantum state that is not unitary. The state onto which \ket{x} is mapped is randomly determined by its associated coefficient. More clearly, \ket{x} will be mapped on the state \ket{k} with probability \(\alpha_k\,\overline{\alpha_k}\). The measurement allows us to classically know onto which state \ket{x} has been projected. The representation of a measurement in a quantum circuit is the following:
                 
                 \begin{figure}[ht]
                     \centering
@@ -164,7 +164,7 @@
                     \caption{Representation of a measurement}
                 \end{figure}
                 
-                Measuring is usually the last thing performed in a quantum algorithm, since it is the only way to go from a quantum state to a classical one. However, a quantum algorithm designed to be used a part of another, bigger, quantum algorithm, does not necessarily perform a measurement. The HHL algorithm \cite{HHL} is often used as such.
+                Measuring is usually the last thing performed in a quantum algorithm, since it is the only way to go from a quantum state to a classical one. However, a quantum algorithm designed to be used as a part of another, bigger, quantum algorithm, does not necessarily perform a measurement. The HHL algorithm \cite{HHL} is often used as such.
                 
                 Note that the way it is performed, measuring a state is not sensible to the global phase of a quantum state. For instance, let us consider a state \ket{\psi}:
                 
@@ -176,7 +176,7 @@
                 
                 with \((\gamma,\theta,\delta)\in\mathbf{R}^3\). The global phase shift \(\mathrm{e}^{\mathrm{i}\,\gamma}\) is physically irrelevant, as unobservable \cite{Berta}.
             \subsubsection{Entanglement}
-                A state \ket{x} is entangled whenever it is not possible to find \(n\) qubits \ket{q_1}, \ket{q_2}, \(\cdots\), \ket{q_n} such that:
+                A state \ket{x} composed of \(n\) qubits is entangled whenever it is not possible to find \(n\) qubits \ket{q_1}, \ket{q_2}, \(\cdots\), \ket{q_n} such that:
                 
                 \[\ket{x}=\bigotimes_{k=1}^n\ket{q_k}\,.\]
                 
@@ -199,13 +199,13 @@
                 
                 Often, efficient quantum algorithms make use of entangled state. For this reason, it is crucial to ensure when measuring a quantum state that it is not entangled.
             \subsubsection{Quantum gates and algorithms}
-                Since a quantum algorithm is actually applications of quantum gates, we can show that it is of course also unitary. For this reason, we often do not make the difference between a quantum gate and a quantum algorithm, especially when no measurement is performed.
+                Since a quantum algorithm is actually applications of quantum gates, we can show that it is of course also unitary. For this reason, we often do not make any difference between a quantum gate and a quantum algorithm, especially when no measurement is performed.
                 
                 We need to introduce some gates that will be used in our implementation and provide their complexity. We define a set of elementary gates:
                 
-                \[\begin{array}{ccccccc}\X\overset{\text{\tiny{def}}}{=}\begin{pmatrix}0 & 1\\1 & 0\end{pmatrix} & \mathrm{H}\overset{\text{\tiny{def}}}{=}\frac{1}{\sqrt{2}}\begin{pmatrix}1 & 1\\1 & -1\end{pmatrix}&\mathrm{R}_{z}(\theta)\overset{\text{\tiny{def}}}{=}\begin{pmatrix}1 & 0\\0 & \mathrm{e}^{\mathrm{i}\,\theta}\end{pmatrix}&\mathrm{R}_y(\theta)\overset{\text{\tiny{def}}}{=}\begin{pmatrix}\cos\left(\frac\theta2\right) & -\sin\left(\frac\theta2\right)\\\sin\left(\frac{\theta}{2}\right) & \cos\left(\frac\theta2\right)\end{pmatrix}\end{array}\]
+                \[\begin{array}{ccccccc}\X\overset{\text{\tiny{def}}}{=}\begin{pmatrix}0 & 1\\1 & 0\end{pmatrix} & \mathbf{H}\overset{\text{\tiny{def}}}{=}\frac{1}{\sqrt{2}}\begin{pmatrix}1 & 1\\1 & -1\end{pmatrix}&\mathbf{R}_{z}(\theta)\overset{\text{\tiny{def}}}{=}\begin{pmatrix}1 & 0\\0 & \mathrm{e}^{\mathrm{i}\,\theta}\end{pmatrix}&\mathbf{R}_y(\theta)\overset{\text{\tiny{def}}}{=}\begin{pmatrix}\cos\left(\frac\theta2\right) & -\sin\left(\frac\theta2\right)\\\sin\left(\frac{\theta}{2}\right) & \cos\left(\frac\theta2\right)\end{pmatrix}\end{array}\]
                 
-                with \(\theta\in\mathbf{R}\). For every matrix \(\mathbf{U}\) in this elementary set, we also define its controlled equivalent \(\mathsf{C}-\mathbf{U}\) as elementary. Note that this does not include \(\mathsf{C}-\mathrm{U}\) itself: a gate that is controlled on more than 2 qubits must be implemented using gates controlled on a single qubit. Finally, we add one more elementary gate (without adding its controlled equivalent), which is the Toffoli gate \(\mathsf{CC}-\mathbf{X}\), also known as the CCNOT gate. Its circuit representation is:
+                with \(\theta\in\mathbf{R}\). For every matrix \(\mathbf{U}\) in this elementary set, we also define its controlled equivalent \(\mathsf{C}-\mathbf{U}\) as elementary. Note that this does not include the controlled gates themselves: a gate that is controlled on more than 2 qubits must be implemented using gates controlled on a single qubit. Finally, we add one more elementary gate (without adding its controlled equivalent), which is the Toffoli gate \(\mathsf{CC}-\mathbf{X}\), also known as the CCNOT gate. Its circuit representation is:
                 
                 \begin{figure}[ht]
                     \centering
@@ -246,6 +246,7 @@
                         \lstick{\ket{q_1}} & \gate{\mathbf{U}_1} & \gate{\mathbf{U}_2}&\qw&\cdots& &\gate{\mathbf{U}_n}&\qw\\
                     \end{quantikz}
                     \caption{An example of a circuit with \(O(n)\) time complexity}
+                    \label{figure:linear}
                 \end{figure}
 
                 Of course, these examples assume that all the \(\mathbf{U}_i\) are elementary gates.
@@ -298,11 +299,7 @@
                         \caption{Implementation of the Quantum Fourier Transform}
                     \end{figure}
                     
-                    where \(\mathbf{H}\) is the Hadamard gate:
-                    
-                    \[\mathbf{H}\overset{\text{\tiny{def}}}{=}\frac{1}{\sqrt{2}}\begin{pmatrix}1 & 1\\1 & -1\end{pmatrix}\]
-                    
-                    and where \(\mathbf{R}_k\) is defined as, for \(k\in\llbracket2\,;\,n\rrbracket\):
+                    where \(\mathbf{R}_k\) is defined as, for \(k\in\llbracket2\,;\,n\rrbracket\):
                     
                     \[\mathbf{R}_k\overset{\text{\tiny{def}}}{=}\begin{pmatrix}1 & 0\\0 & \mathrm{e}^{\frac{2\,\mathrm{i}\,\pi}{2^k}}\end{pmatrix}\,.\]
                     
@@ -332,7 +329,7 @@
                         \end{quantikz}
                         \caption{Quantum circuit for the Quantum Phase Estimation algorithm}
                     \end{figure}
-                    The \(\mathbf{H}\) gates are all applied in \(O(1)\), and we know that \(\mathbf{F}^\dagger\) is applied in time \(O(n^2)\). However, the controlled gate \(\mathbf{U}^{2^k}\) is implemented by concatenating \(\mathbf{U}\) to itself \(2^k\) times. As such, the total number of gates used for this step is \(T_{\mathbf{U}\left(2^n-1\right)}\). Hence, the complexity of this circuit is \(O\left(2^n\,n^2\,T_{\mathbf{U}}\right)\).
+                    The \(\mathbf{H}\) gates are all applied in \(O(1)\), and we know that \(\mathbf{F}^\dagger\) is applied in time \(O(n^2)\). However, the controlled gate \(\mathbf{U}^{2^k}\) is implemented by concatenating \(\mathbf{U}\) to itself \(2^k\) times. As such, the total number of gates used for this step is \(T_{\mathbf{U}}\,\left(2^n-1\right)\). Hence, the complexity of this circuit is \(O\left(2^n\,n^2\,T_{\mathbf{U}}\right)\).
                 \end{definition}
                 
                 Finally, we will need to apply an arbitrary function on a quantum state. Since a quantum gate has to be reversible, there is a common trick to define such a gate.
@@ -340,7 +337,7 @@
                 \begin{definition}[Gate of a real function]
                     Let \(f:\{0\,;\,1\}^n\to\{0\,;\,1\}^m\) be an arbitrary function on bit strings. Then, the gate:
                     
-                    \[\mathbf{U}_f:\ket{x}\,\ket{y}\mapsto\ket{x}\ket{x\oplus y}\]
+                    \[\mathbf{U}_f:\ket{x}\,\ket{y}\mapsto\ket{x}\ket{f(x)\oplus y}\]
                     
                     is unitary. If \(f\) is efficiently computable, then so is \(\mathbf{U}_f\). A way to perform this can be to decompose \(f\) using its Taylor expansion, or simply to translate the classical circuit for computing \(f\) into a quantum circuit.
                 \end{definition}
@@ -349,11 +346,11 @@
             \label{subsec:Hardware}
             Whilst the previous formalism is useful to design quantum gates, it is important to keep in mind that some operations are not allowed, or are subject to some limitations because of current quantum hardware. These limitations are the difference between the theoretic algorithm and its actual implementation and as such, the reason of this paper. Three of them are particularly important.
             
-            First of all, only a limited set of gates can be implemented. For instance, Google’s Xmon devices only supports the \(\mathbf{Z}\) gate, the \(\mathsf{C}-\mathbf{Z}\) gate and a more general version of the \(\X\) gate. This is not of great importance, as long as we can define every gate in \(\mathcal{E}\) from every allowed gate in time \(O(1)\), to satisfy \thref{assumption:Elementary}.
+            First of all, only a limited set of gates can be implemented. For instance, Google’s Xmon devices only supports the \(\mathbf{R}_z(\pi)\) gate, the \(\mathsf{C}-\mathbf{R}_z(\pi)\) gate and a more general version of the \(\X\) gate. This is not of great importance, as long as we can define every gate in \(\mathcal{E}\) from every allowed gate in time \(O(1)\), to satisfy \thref{assumption:Elementary}.
             
             Then, only neighbours qubits can interact. Depending on how the qubits are ordered, like in a line or on a grid, their connectivity changes. To overcome this problem, we need to add SWAP gates whenever we desire to control a gate on several qubits. Since the number of SWAP gates is however in \(O(n)\), it does not change the overall complexity of \(\mathsf{C}^n-\mathbf{U}\). Hence, for simplicity and legibility, we decided not to include the SWAP gates in the circuit.
             
-            Finally, it is not possible to add gates dynamically on the quantum circuit. For instance, it is not possible to perform a measurement and add a gate dynamically as a function of the result. More precisely, there is no possibility to act on any qubit inside once it has begun to run. As a recall, the no-deleting theorem states:
+            Finally, it is not possible to add gates dynamically on the quantum circuit. For instance, it is not possible to perform a measurement and add a gate dynamically as a function of the result. More precisely, there is no possibility to act on any qubit inside once it has begun to run. As a reminder, the no-deleting theorem states:
             
             \begin{theorem}[No-deleting theorem]
                 There is no unitary \(\mathbf{U}\) that maps an arbitrary state \ket{\psi} to the state \ket{0}.
@@ -368,23 +365,23 @@
         \label{sec:QRS}
         In this section, we intend to describe what a recommendation system is and how the quantum algorithm of \citeauthor{QRS} solves it.
         \subsection{Principles of a recommendation system}
-            Let us consider some platform with \(m\) different users and \(n\) different products. Each user has the possibility, once bought, to rate a product according to a binary marking scheme: either the user liked the product, or she did not. The goal of a recommendation system is to provide a user a recommendation from a list of already graded products. This list includes also products graded by other users.
+            Let us consider some platform with \(m\) different users and \(n\) different products. Each user has the possibility, once bought, to rate a product according to a binary marking scheme: either the user liked the product, or they did not. The goal of a recommendation system is to provide a user a recommendation from a list of already graded products. This list includes also products graded by other users.
             
             Hence, we can represent this as a matrix with \(m\) rows and \(n\) columns, where each row represents a user and each column a product. Each coefficient of the matrix is either 0 or 1, indicating whether the user liked the product. This matrix is called the preference matrix, and we only have access to a portion of it (otherwise the problem would be trivial).
             
             From this incomplete preference matrix, the recommendation system will compute an approximation of the true preference matrix and use it to make recommendation. Its goal is to discover somehow the relationships between users to discover how the fact that some user rated a product positively affects the probability that another user would do the same. For this reason, it is assumed that the preference matrix has a good approximation of rank \(k\). In real-world terms, it means that it makes the assumption that there are \(k\) typical different users. Two users belonging to the same class will most likely rate positively the same products.
             
-            In classical approaches at that time, an SVD decomposition was performed on the reconstructed preference matrix. The, by keeping only the \(k\) largest singular values, a rank-\(k\) matrix was obtained and used for making predictions. This approach is polynomial in the parameters of the preference matrix \(m\) and \(n\). The problem is that the reconstructed matrix has to be recomputed each time a user rates a new product. The problem is that the rank-\(k\) matrix had to be computed before getting a result from it. The principle of the algorithm of \citeauthor{QRS} is therefore to sample from this reconstructed matrix to get a recommendation once in polylogarithmic time.
+            In classical approaches at that time, an SVD decomposition was performed on the reconstructed preference matrix. Then, by keeping only the \(k\) largest singular values, a rank-\(k\) matrix was obtained and used for making predictions. This approach is polynomial in the parameters of the preference matrix \(m\) and \(n\). The problem is that the reconstructed matrix has to be recomputed each time a user rates a new product. The principle of the algorithm of \citeauthor{QRS} is therefore to sample from this reconstructed matrix to get a recommendation once in polylogarithmic time.
         \subsection{A quantum algorithm as a recommendation system}
-            The following describes the algorithm presented in \cite{QRS}. This section intends to give a high-level overview of this algorithm. Its actual implementation is discussed in \autoref{sec:QCircuit}. Let \(\mathbf{P}\in\{0\,;\,1\}^{m\times n}\) a matrix that has a good rank-\(k\) approximation. That is, for a given approximation parameter \(\varepsilon\):
+            The following describes the algorithm presented in \cite{QRS}. This section intends to give a high-level overview of this algorithm. Its actual implementation is discussed in \autoref{sec:QCircuit}. Let \(\mathbf{P}\in\{0\,;\,1\}^{m\times n}\) be a matrix that has a good rank-\(k\) approximation. That is, for a given approximation parameter \(\varepsilon\):
             
-            \[\exists\hat{\mathbf{P}},\left\|\mathbf{P} - \mathbf{P}_k\right\|_F\leqslant\varepsilon\|\mathbf{P}\|_F\]
+            \[\left\|\mathbf{P} - \mathbf{P}_k\right\|_F\leqslant\varepsilon\|\mathbf{P}\|_F\]
             
             where \(\mathbf{P}_k\) is the matrix obtained by keeping only the \(k\) largest singular values in the SVD decomposition of \(\mathbf{P}\).
             
             Let \(\eta\in\mathbf{R}_+^*\). Then we define the matrix \(\hat{\mathbf{P}}\) as:
             
-            \[\forall(i, j)\in\llbracket1\,;\,m\rrbracket\times\llbracket1\,;\,n\rrbracket,\hat{\mathbf{P}}_i,j\overset{\text{\tiny{def}}}{=}\begin{cases}\mathbf{P}_i,j\,\frac{\eta\,\|\mathbf{P}\|_F}{16\,n}&\text{with probability } \frac{16\,n}{\eta\,\|\mathbf{P}\|_F}\\0&\text{with probability } 1-\frac{16\,n}{\left(\eta\,\|\mathbf{P}\|_F\right)^2}\end{cases}\,.\]
+            \[\forall(i, j)\in\llbracket1\,;\,m\rrbracket\times\llbracket1\,;\,n\rrbracket,\hat{\mathbf{P}}_{i,j}\overset{\text{\tiny{def}}}{=}\begin{cases}\mathbf{P}_{i,j}\,\frac{\eta\,\|\mathbf{P}\|_F}{16\,n}&\text{with probability } \frac{16\,n}{\left(\eta\,\|\mathbf{P}\|_F\right)^2}\\0&\text{with probability } 1-\frac{16\,n}{\left(\eta\,\|\mathbf{P}\|_F\right)^2}\end{cases}\,.\]
             
             Once \(\hat{\mathbf{P}}\) has been built, the algorithm adds every new information it gets after every products it recommends, to it. Hence, the definition above is only used to initialize \(\hat{\mathbf{P}}\).
             
@@ -402,9 +399,9 @@
                 
                 \[\hat{\mathbf{P}} = \sum_{i}\sigma_i\,\mathbf{u}_i\,\mathbf{v}_i^\dagger\,.\]
                 
-                Even though we load \ket{\hat{\mathbf{P}}_i} using its coefficients in the computational basis, we denote the quantum state in the left orthonormal basis in the SVD decomposition of \(\hat{\mathbf{P}}\), that is:
+                Even though we load \ket{\hat{\mathbf{P}}_j} using its coefficients in the computational basis, we denote the quantum state in the left orthonormal basis in the SVD decomposition of \(\hat{\mathbf{P}}\), that is:
                 
-                \[\ket{\hat{\mathbf{P}}_i} \overset{\text{\tiny{def}}}{=} \sum_{i}\alpha_i\,\ket{v_i}\,.\]
+                \[\ket{\hat{\mathbf{P}}_j} \overset{\text{\tiny{def}}}{=} \sum_{i}\alpha_i\,\ket{v_i}\,.\]
                 
             \subsubsection{Finding singular values}
                 We now have the quantum state:
@@ -429,7 +426,7 @@
                 
                 \[\forall i\in\llbracket1\,;\,m\rrbracket,\overset{\sim}{\mathbf{P}}_i\overset{\text{\tiny{def}}}{=}\left\|\hat{\mathbf{P}}_i\right\|\,.\]
                 
-                Then, by naming \(\mathbf{U}\) the reflection on the vector space spanned by the columns of \(\mathbf{M}_1\) and \(\mathbf{V}\) the reflection on the vector space spanned by the columns of \(\mathbf{M}_2\), then the unitary \(\mathbf{W} = \mathbf{U}\,\mathbf{V}\) has as eigenvalues the singular values of \(\hat{\mathbf{P}}_i\).
+                Then, by naming \(\mathbf{U}\) the reflection on the vector space spanned by the columns of \(\mathbf{M}_1\) and \(\mathbf{V}\) the reflection on the vector space spanned by the columns of \(\mathbf{M}_2\), then the unitary \(\mathbf{W} = \mathbf{U}\,\mathbf{V}\) has as eigenvalues the singular values of \(\hat{\mathbf{P}}\).
                 
                 Hence, the task is to implement in logarithmic time \(\mathbf{W}\) and to apply the Quantum Phase Estimation algorithm on it to get the state:
                 
@@ -453,7 +450,7 @@
                 
                 Hence, we need to be able to compare two quantum states. This is discussed in \autoref{subsec:Threshold}.
                 
-                After having applied \(\mathrm{T}_\sigma\), we are left with the state:
+                After having applied \(\mathbf{T}_\sigma\), we are left with the state:
                 
                 \[\sum_{i\in\mathcal{S}}\alpha_i\,\ket{v_i}\,\ket{\sigma_i}\,\ket{0} + \sum_{i\in\overline{\mathcal{S}}}\alpha_i\,\ket{v_i}\,\ket{\sigma_i}\,\ket{1}\]
                 
@@ -467,9 +464,9 @@
                 
     \section{Designing a quantum circuit for a recommendation system}
         \label{sec:QCircuit}
-        We now design a quantum circuit to perform the algorithm of \citeauthor{QRS}. Let \(\mathbf{P}\) be the black box preference matrix. As a recall, we define \(\hat{\mathbf{P}}\) as:
+        We now design a quantum circuit to perform the algorithm of \citeauthor{QRS}. Let \(\mathbf{P}\) be the black box preference matrix. As a reminder, we define \(\hat{\mathbf{P}}\) as:
         
-        \[\forall(i, j)\in\llbracket1\,;\,m\rrbracket\times\llbracket1\,;\,n\rrbracket,\hat{\mathbf{P}}_i,j\overset{\text{\tiny{def}}}{=}\begin{cases}\mathbf{P}_i,j\,\frac{\eta\,\|\mathbf{P}\|_F}{16\,n}&\text{with probability } \frac{16\,n}{\eta\,\|\mathbf{P}\|_F}\\0&\text{with probability } 1-\frac{16\,n}{\left(\eta\,\|\mathbf{P}\|_F\right)^2}\end{cases}\,.\]
+        \[\forall(i, j)\in\llbracket1\,;\,m\rrbracket\times\llbracket1\,;\,n\rrbracket,\hat{\mathbf{P}}_{i,j}\overset{\text{\tiny{def}}}{=}\begin{cases}\mathbf{P}_{i,j}\,\frac{\eta\,\|\mathbf{P}\|_F}{16\,n}&\text{with probability } \frac{16\,n}{\left(\eta\,\|\mathbf{P}\|_F\right)^2}\\0&\text{with probability } 1-\frac{16\,n}{\left(\eta\,\|\mathbf{P}\|_F\right)^2}\end{cases}\,.\]
         
         \(\hat{\mathbf{P}}\) is assumed to be known at the beginning of the algorithm. It is also assumed that, by denoting \(\mathbf{P}_k\) the matrix obtained by keeping only the \(k\) largest singular values in the SVD decomposition of \(\mathbf{P}\):
         
@@ -485,7 +482,7 @@
             \label{subsec:LoadingQRAM}
             In order to load a quantum state from a real vector, \citeauthor{QRS} make use of Quantum RAM, also denoted QRAM. The principle is to have a classical data structure with quantum access, that is, a data structure from which we can get information by querying it with a quantum state, potentially in superposition.
             
-            While some general-purpose QRAM circuit has been stud, for instance in \cite{QRAMCircuit}, we will describe a design specially designed for state creation, described by \citeauthor{Prakash} in \cite{Prakash}.
+            While some general-purpose QRAM circuit has been studied, for instance in \cite{QRAMCircuit}, we will describe a design specially designed for state creation, described by \citeauthor{Prakash} in \cite{Prakash}.
             
             \subsubsection{Designing Quantum RAM}
                 \label{subsubsec:QRAM}
@@ -532,11 +529,11 @@
                     \caption{An example of a QRAM tree}
                 \end{figure}
                 
-                We now define the gate \(\mathbf{L}_\mathrm{x}\) with the following property:
+                We now define the gate \(\mathbf{L}_\mathbf{x}\) with the following property:
                 
-                \[\mathbf{L}_\mathrm{x}\,\ket{0}^{\otimes\left\lceil\log_2(p)\right\rceil}=\ket{x}\,.\]
+                \[\mathbf{L}_\mathbf{x}\,\ket{0}^{\otimes\left\lceil\log_2(p)\right\rceil}=\ket{x}\,.\]
                 
-                Hence, our goal is to decompose \(\mathbf{L}_\mathrm{x}\) into elementary gates to ensure that it can be implemented in logarithmic time. In order to do so, we use the algorithm presented in \cite{QLSPrimer}.
+                Hence, our goal is to decompose \(\mathbf{L}_\mathbf{x}\) into elementary gates to ensure that it can be implemented in logarithmic time. In order to do so, we use the algorithm presented in \cite{QLSPrimer}.
                 
                 \begin{algorithm}[H]
                     \SetAlgoLined
@@ -608,7 +605,7 @@
                 
                 The goal of \(f\) is to take a vector from the computational basis of \(\mathbf{R}^p\) and to map it to the corresponding rotation angle to be performed at a certain level. Hence, the associated matrix of \(f\) is a permutation matrix.
                 
-                Using \(\mathbf{U}_f\), we can now have access to \ket{\theta_x}. As a recall, since we assume \(f\) is efficiently computable classically, so is \(\mathbf{U}_f\). We now want to perform a rotation around the $y$-axis of angle $2\,\theta_x$.
+                Using \(\mathbf{U}_f\), we can now have access to \ket{\theta_x}. As a reminder, since we assume \(f\) is efficiently computable classically, so is \(\mathbf{U}_f\). We now want to perform a rotation around the $y$-axis of angle $2\,\theta_x$.
                 
                 In order to give the intuition on the way to perform this, let us consider the following circuit:
                 
@@ -627,7 +624,7 @@
                 
                 \[\ket{x}\otimes\mathrm{e}^{\mathrm{i}\,\theta_1}\,\ket{\theta_1}\otimes\mathrm{e}^{\mathrm{i}\,\theta_2\,2^{-1}}\,\ket{\theta_2}\otimes\mathrm{e}^{\mathrm{i}\,\theta_3\,2^{-2}}\ket{\theta_3}=\mathrm{e}^{\mathrm{i}\,\theta}\,\ket{x}\,\ket{\theta}\,.\]
                 
-                Hence, we are able using this to perform a rotation around the \(z\)-axis from a quantum state. Quite similarly to what happened in the previous circuit, we will now apply phase gates on the \ket{\theta_k} qubits, but this time controlled on the target qubit. The reason why we perform this will appear in the state description. Let us consider the following circuit, where we only took two qubits for approximating \(\theta\) for legibility:
+                Hence, we are able, using this, to perform a rotation around the \(z\)-axis from a quantum state. Quite similarly to what happened in the previous circuit, we will now apply phase gates on the \ket{\theta_k} qubits, but this time controlled on the target qubit. The reason why we perform this will appear in the state description. Let us consider the following circuit, where we only took two qubits for approximating \(\theta\) for legibility:
                 
                 \begin{figure}[ht]
                     \centering
@@ -644,19 +641,19 @@
                 
                 \[\ket{\varphi_0}=(\alpha\,\ket{000} + \beta\,\ket{100})\,(\gamma\,\ket{0} + \delta\,\ket{1})\,.\]
                 
-                We then apply the \(\mathbf{U}_f\) gate on the first three qubits. As a recall, since \(\mathbf{U}_f\) implements \(f\), this will leave the first qubit unchanged, while it will modify the two others qubits to the actual value of \(\theta_x\). Hence, we got the state:
+                We then apply the \(\mathbf{U}_f\) gate on the first three qubits. As a reminder, since \(\mathbf{U}_f\) implements \(f\), this will leave the first qubit unchanged, while it will modify the two others qubits to the actual value of \(\theta_x\). Hence, we got the state:
                 
-                \[\ket{\varphi_1} = \left(\alpha\,\ket{0\theta_{0,0}\theta_{0,1}} + \beta\,\ket{1\theta{1,0}\theta{1,1}}\right)\,(\gamma\,\ket{0} + \delta\,\ket{1})\,.\]
+                \[\ket{\varphi_1} = \left(\alpha\,\ket{0\theta_{0,0}\theta_{0,1}} + \beta\,\ket{1\theta_{1,0}\theta_{1,1}}\right)\,(\gamma\,\ket{0} + \delta\,\ket{1})\,.\]
                 
                 Note that we denoted \(\theta_{x, n}\) as the \(n+1\)\textsuperscript{th} qubit of \(\theta_x\). It will be easier for the following to develop this expression:
                 
                 \[\ket{\varphi_1} = \alpha\,\gamma\,\ket{0\theta_{0,0}\theta_{0,1}0} + \alpha\,\delta\,\ket{0\theta_{0,0}\theta_{0,1}1} + \beta\,\gamma\,\ket{1\theta_{1,0}\theta_{1,1}0} + \beta\,\delta\,\ket{1\theta_{1,0}\theta_{1,1}1}\,.\]
                 
-                We now apply the \(\mathbf{R}_z(1)\) gate controlled on the last qubit:
+                We now apply the \(\mathbf{R}_z(1)\) gate controlled on the last qubit being in state \ket{1}:
                 
                 \[\ket{\varphi_2} = \alpha\,\gamma\,\ket{0\theta_{0,0}\theta_{0,1}0} + \alpha\,\delta\,\mathrm{e}^{\mathrm{i}\,\theta_{0,0}}\,\ket{0\theta_{0,0}\theta_{0,1}1} + \beta\,\gamma\,\ket{1\theta_{1,0}\theta_{1,1}0} + \beta\,\delta\,\mathrm{e}^{\mathrm{i}\,\theta_{1,0}}\,\ket{1\theta_{1,0}\theta_{1,1}1}\,.\]
                 
-                Similarly, we apply the \(\mathbf{R}_z\left(\frac12\right)\) gate on the third qubit controlled on the last qubit:
+                Similarly, we apply the \(\mathbf{R}_z\left(\frac12\right)\) gate on the third qubit controlled on the last qubit being in state \ket{1}:
                 
                 \[\ket{\varphi_3} = \alpha\,\gamma\,\ket{0\theta_{0,0}\theta_{0,1}0} + \alpha\,\delta\,\mathrm{e}^{\mathrm{i}\,\theta_{0}}\,\ket{0\theta_{0,0}\theta_{0,1}1} + \beta\,\gamma\,\ket{1\theta_{1,0}\theta_{1,1}0} + \beta\,\delta\,\mathrm{e}^{\mathrm{i}\,\theta_{1}}\,\ket{1\theta_{1,0}\theta_{1,1}1}\,.\]
                 
@@ -683,7 +680,7 @@
                 \begin{figure}[ht]
                     \centering
                     \begin{quantikz}
-                        \lstick{\ket{q_1}} & \gate{\mathbf{R}_y\left(\theta_{\text{root}}\right)} & \gate[wires=3]{\mathbf{U}_f} & \qw & \qw & \gate[wires=3]{\mathbf{U}_f^\dagger} & \qw\\
+                        \lstick{\ket{q_1}} & \gate{\mathbf{R}_y\left(2\,\theta_{\text{root}}\right)} & \gate[wires=3]{\mathbf{U}_f} & \qw & \qw & \gate[wires=3]{\mathbf{U}_f^\dagger} & \qw\\
                         \lstick{\ket{0}} & \qw & & \gate{\mathbf{R}_z(1)} & \qw & & \qw\\
                         \lstick{\ket{0}} & \qw & & \qw & \gate{\mathbf{R}_z\left(\frac12\right)} & & \qw\\
                         \lstick{\ket{q_2}} & \qw & \gate{\frac{1}{\sqrt{2}}\,\left(\mathrm{e}^{\mathrm{i}\,\frac\pi2}\,\mathbf{R}_y(\pi)+\mathbf{R}_z(\pi)\right)} & \ctrl{-2} & \ctrl{-1} & \gate{\frac{1}{\sqrt{2}}\,\left(\mathrm{e}^{\mathrm{i}\,\frac\pi2}\,\mathbf{R}_y(\pi)+\mathbf{R}_z(\pi)\right)} & \qw
@@ -693,16 +690,16 @@
                 
                 This circuit can be generalised for an arbitrary number of qubits for approximating \(\theta\) and for any level of the tree \(k\).
                                 
-                We now have defined the loading gate \(\mathbf{L}_\mathrm{x}\), which we can apply to get the state \(\ket{x}=\ket{\hat{\mathrm{P}}_j}\).
+                We now have defined the loading gate \(\mathbf{L}_\mathbf{x}\), which we can apply to get the state \(\ket{x}=\ket{\hat{\mathbf{P}}_j}\).
 
 
         \subsection{Applying the Quantum Phase Estimation algorithm}
             \label{subsec:ImplementingQPE}
-            Now that the state \ket{\hat{\mathrm{P}}_j} has been loaded from QRAM, we are to append a quantum register of size \(\lceil\log(n)\rceil\) before the quantum register in which \ket{\hat{\mathrm{P}}_j} has been loaded and to apply a unitary \(\mathbf{Q}\) to get the state:
+            Now that the state \ket{\hat{\mathbf{P}}_j} has been loaded from QRAM, we are to append a quantum register of size \(\lceil\log(n)\rceil\) before the quantum register in which \ket{\hat{\mathbf{P}}_j} has been loaded and to apply a unitary \(\mathbf{Q}\) to get the state:
             
             \[\ket{\mathbf{Q}\,\hat{\mathbf{P}}_j}=\sum_i\alpha_i\,\ket{\overset{\sim}{\mathbf{A}}, j}\,.\]
             
-            Since \(\overset{\sim}{\mathbf{P}}\) is easily loadable via QRAM, we only have to apply the loading gate \(\mathbf{L}_{\overset{\sim}{\mathbf{P}}}\) to the first register to get the desired state. As a recall, \(\overset{\sim}{\mathbf{P}}\) is defined as:
+            Since \(\overset{\sim}{\mathbf{P}}\) is easily loadable via QRAM, we only have to apply the loading gate \(\mathbf{L}_{\overset{\sim}{\mathbf{P}}}\) to the first register to get the desired state. As a reminder, \(\overset{\sim}{\mathbf{P}}\) is defined as:
             
             \[\forall i\in\llbracket1\,;\,m\rrbracket,\overset{\sim}{\mathbf{P}}_i=\|\hat{\mathbf{P}}_i\|\,.\]
             
@@ -761,7 +758,7 @@
                 
                 \[\exists\theta_i\in[-\pi\,;\,\pi[,\overline{\sigma_i}=\cos\left(\frac{\theta_i}{2}\right)\,\|\mathbf{A}\|_F\,.\]
                 
-                What we want to do now is to perform a mapping between \(a_i\) and \(\theta_i\), since we only have access to \(a_i\). As a recall, \(a_i\) is the output of the Quantum Phase Estimation algorithm. Hence, the phase of the eigenvalue is \(2\,\pi\,a_i\). The problem is that \(\theta_i\) is defined on \([-\pi\,;\,\pi[\). Hence, \(\theta_i\) and \(2\,\pi\,a_i\) corresponds to the same angle for \(a_i\in[0\,;\,\frac12[\). For \(a_i\geqslant\frac12\), \(\theta_i\) grows linearly again with \(a_i\), and we have:
+                What we want to do now is to perform a mapping between \(a_i\) and \(\theta_i\), since we only have access to \(a_i\). As a reminder, \(a_i\) is the output of the Quantum Phase Estimation algorithm. Hence, the phase of the eigenvalue is \(2\,\pi\,a_i\). The problem is that \(\theta_i\) is defined on \([-\pi\,;\,\pi[\). Hence, \(\theta_i\) and \(2\,\pi\,a_i\) corresponds to the same angle for \(a_i\in[0\,;\,\frac12[\). For \(a_i\geqslant\frac12\), \(\theta_i\) grows linearly again with \(a_i\), and we have:
                 
                 \[\exists(m,p)\in\mathbf{R}^2,\left\{\begin{array}{lcl}m\times\frac12+p &=& -\pi\\\\m\times1 + p &=& 0\end{array}\right.\]
                 
@@ -792,9 +789,9 @@
             \subsubsection{Comparing a quantum state and a real number bitwise}
                 Since we know \(\sigma\) and \(\kappa\) beforehand, and since \(\|\mathbf{A}\|_F\) is easily accessible, we can compute \(b_1=\frac1\pi\,\arccos\left(\frac{\sigma\,\left(1 - \frac\kappa2\right)}{\|\mathbf{A}\|_F}\right)\) and \(b_2 = 1 - b_1\). Let \(b\) represent either \(b_1\) or \(b_2\).
                 
-                What we want to do is to determine whether \(b<a_i\) by looking at their binary expansion. As a recall, the following holds:
+                What we want to do is to determine whether \(b<a_i\) by looking at their binary expansion. As a reminder, the following holds:
                 
-                \[\forall N\in\mathbf{N},2^-N=\sum_{k=N+1}^{+\infty}2^{-k}\,.\]
+                \[\forall N\in\mathbf{N},2^{-N}=\sum_{k=N+1}^{+\infty}2^{-k}\,.\]
                 
                 In particular:
                 
@@ -802,17 +799,17 @@
                 
                 We also know that we can write \(a_i\) using its binary expansion:
                 
-                \[a_i=\sum_{k=1}^{\lceil\log(n)\rceil}a_{i,k}2^{-k}\]
+                \[a_i=\sum_{k=1}^{\lceil\log(n)\rceil}a_{i,k}\,2^{-k}\]
                 
                 and the same holds for \(b\):
                 
-                \[b=\sum_{k=1}^{\lceil\log(n)\rceil}b_{k}2^{-k}\,.\]
+                \[b=\sum_{k=1}^{\lceil\log(n)\rceil}b_{k}\,2^{-k}\,.\]
                 
                 Using this, we know that the first bit \(j\) at which \(b_j\neq a_{i,j}\) determines whether \(a_i\geqslant b\). If \(a_{i,j}=1\), then \(a_i>b\). If \(b_j=1\), then \(b>a_i\).
                 
-                Note that since \(\frac{\sigma\,\left(1 - \frac\kappa2\right)}{\|\mathbf{A}\|_F}\in]0\,;\,1]\), we have \(b_1\in\left[0\,;\,\frac12\right[\), hence \(b_{1,1}=0\) and \(b_{1,2}=1\). Hence, the goal is now to compare \(b\) and \(a_i\) bitwise to determine which one is superior. We consider the state \(\ket{\overline{a_i}} = \ket{a_{i,2}\cdots a_{i,\lceil\log(n)\rceil}}\), which represents \(a_i\) if \(a_i<\frac12\), that is \(a_{i,1}=0\), and \(a_i-\frac12\) if \(a_i>\frac12\), that is \(a_{i, 1} = 1\). Hence, the algorithm will go through \(\lceil\log(n)\rceil - 1\) steps for each one of \(b_1\) and \(b_2\). Without loss of generality, we will for now consider the case \(a_i<\frac12\), that is \(b=b_1\). We identify each of the steps by the number of the bit it applies to. Hence, the first step is identified with \(2\) since there is no need to test the fist bit, the second one with \(3\) and the last one with \(\lceil\log(n)\rceil\). Hence, at step \(j\), the algorithm operates on qubit \ket{a_{i,j}} and bit \(b_j\).
+                Note that since \(\frac{\sigma\,\left(1 - \frac\kappa2\right)}{\|\mathbf{A}\|_F}\in]0\,;\,1]\), we have \(b_1\in\left[0\,;\,\frac12\right[\), hence \(b_{1,1}=0\) and \(b_{2,1}=1\). Hence, the goal is now to compare \(b\) and \(a_i\) bitwise to determine which one is superior. We consider the state \(\ket{\overline{a_i}} = \ket{a_{i,2}\cdots a_{i,\lceil\log(n)\rceil}}\), which represents \(a_i\) if \(a_i<\frac12\), that is \(a_{i,1}=0\), and \(a_i-\frac12\) if \(a_i>\frac12\), that is \(a_{i, 1} = 1\). Hence, the algorithm will go through \(\lceil\log(n)\rceil - 1\) steps for each one of \(b_1\) and \(b_2\). Without loss of generality, we will for now consider the case \(a_i<\frac12\), that is \(b=b_1\). We identify each of the steps by the number of the bit it applies to. Hence, the first step is identified with \(2\) since there is no need to test the fist bit, the second one with \(3\) and the last one with \(\lceil\log(n)\rceil\). Hence, at step \(j\), the algorithm operates on qubit \ket{a_{i,j}} and bit \(b_j\).
                 
-                Some circuits already exist for quantum bit-string comparison. For instance \citeauthor{QBSC} and describes different circuits to do such a task in \cite{QBSC}. However, these circuits use a whole quantum register to store one of the two strings. In order to take advantage from the fact that we have a classical representation of \(b\), we build our own circuit to deal with this problem.
+                Some circuits already exist for quantum bit-string comparison. For instance \citeauthor{QBSC} and describes different circuits to do such a task in \cite{QBSC}. However, these circuits use a whole quantum register to store one of the two strings. In order to take advantage of the fact that we have a classical representation of \(b\), we build our own circuit to deal with this problem.
                 
             \subsubsection{Detecting the inequality}
                 The first idea for constructing the circuit is to add an ancilla qubit whose goal is to determine whether the two bits are equal:
@@ -888,19 +885,18 @@
                 
                 Plus, since every operation is controlled on \(a_{i,1}\), we can simply concatenate the two circuits to use the same ancillas for the case \(a_i>\frac12\). At every step, \(7\) controlled gates are applied. Hence, the total complexity of this circuit is linear in the number of steps it makes, that is \(O(\log(n))\).
                 
-                There are still two corner cases which we need to tackle, that are the cases \(a_i=\frac12\) and \(a_i=b\). If \(a_i=\frac12\), it will only be considered by the second part of the circuit. Since \(b_1<\frac12\), we know that \(b_2>\frac12\). Hence, the second part will detect that \(b_2>a_i\) and outputs the state \ket{1}, which is what we desire. Concerning the case \(a_i=b\), the circuit will never detect an inequality. Hence, it will output the state \ket{0}, which is also what we want. Indeed, as a recall, we have:
+                There are still two corner cases which we need to tackle, that are the cases \(a_i=\frac12\) and \(a_i=b\). If \(a_i=\frac12\), it will only be considered by the second part of the circuit. Since \(b_1<\frac12\), we know that \(b_2>\frac12\). Hence, the second part will detect that \(b_2>a_i\) and outputs the state \ket{1}, which is what we desire. Concerning the case \(a_i=b\), the circuit will never detect an inequality. Hence, it will output the state \ket{0}, which is also what we want. Indeed, as a reminder, we have:
                 
                 \[\sigma_i < \sigma\,\left(1 - \frac\kappa2\right)\iff\begin{cases}\frac1\pi\,\arccos\left(\frac{\sigma\,\left(1 - \frac\kappa2\right)}{\|\mathbf{A}\|_F}\right) < a_i&\text{if }a_i<\frac12\\1-\frac1\pi\,\arccos\left(\frac{\sigma\,\left(1 - \frac\kappa2\right)}{\|\mathbf{A}\|_F}\right) > a_i&\text{if }a_i\geqslant\frac12\end{cases}\,.\]
                 
                 In particular, \(a_i=b\) implies that \(\sigma_i \geqslant \sigma\,\left(1 - \frac\kappa2\right)\). As such, the output of \(\mathbf{T}_\sigma\) is to be \ket{0}.
                 
     \section{Conclusion}
-    % TODO: Dequantized algorithms, number of qubits, cut in probability, acknowledgements
         In this paper, we tried to highlight the differences between a theoretical implementation of a quantum algorithm and its real-world implementation. We showed that even given some compromises, like cutting down the probability of success, some operations are for now impossible to perform.
         
         In particular, we discussed two useful concepts used in quantum subroutines: QRAM and Quantum Phase Estimation. While the former shows its true potential when implemented with a quantum access, the latter is, at our knowledge, not conveniently usable as a quantum subroutine because of the measurement it performs.
         
-        We believe it is feasible to load data in the QRAM using circuits as mentioned in \cite{QRAMCircuit} but have chosen to let it for a future work. We also believe that it is possible to use the QPE algorithm without either performing the measurement or having to uncompute it, which would solve the problem.
+        We believe it is feasible to load data in the QRAM using circuits as mentioned in \cite{QRAMCircuit} but have chosen to let it for a future work. We also believe that it is possible to use the QPE algorithm without either performing the measurement or having to uncompute it, which would solve the problem. As for the implementation of the algorithm, including the QRAM without quantum access, our code is available in \cite{GithubNemoz}.
         
         Still, it is important to keep in mind that the algorithm described has a classical equivalent described by \citeauthor{Dequantized} in \cite{Dequantized}. As such, it is very likely that this classical algorithm will be used in lieu of the quantum one, for performance reasons.
         
