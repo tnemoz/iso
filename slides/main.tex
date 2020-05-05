@@ -24,6 +24,7 @@
 \usepackage{blochsphere}
 \usepackage{tikz-3dplot}
 \usetikzlibrary{3d}
+\usepackage{animate}
 
 \tikzset{
     invisible/.style={opacity=0,text opacity=0},
@@ -60,7 +61,7 @@
     \begin{itemize}
         \item $m$ users can rate $n$ products\pause\ (binary voting)\pause
         \item Not all ratings are known\pause
-        \item Can we predict whether user $j$ will like product $k$?
+        \item Can we predict whether user $j$ will like product $k$?\pause\ Can we \textbf{recommend} a product to this user?
     \end{itemize}
 \end{frame}
 
@@ -68,33 +69,20 @@
     \begin{block}{Binary recommendation system}
         Let $\mathbf{P}\in\{0\,;\,1\}^{m\times n}$, whose coefficients are known with a given probability. A quantum recommendation system, given $\hat{\mathbf{P}}$ the incomplete respresentation of $\mathbf{P}$ and an user $j$, predicts $k$ such that $\mathbf{P}_{j,k}=1$ with high probability.
     \end{block}\pause
-    Impossible problem without assumptions
-\end{frame}
-
-\begin{frame}{Problem assumptions}
-    \begin{exampleblock}{The low-rank assumption}
-        Let $\mathbf{P}$ be the unknown preference matrix. For a given precision parameter $\varepsilon$, there exists a rank-$k$ matrix $\mathbf{T}$ such that:
-        
-        \[\|\mathbf{P}-\mathbf{T}\|_F\leqslant\varepsilon\,\|\mathbf{P}\|_F\,.\]
-    \end{exampleblock}\pause
-    $\implies$ there are $k$ types of \textcolor<3>{red}{typical} users.\pause\pause
-    
-    \begin{exampleblock}{Problem initialization}
-        $\mathbf{P}$ can be sampled into $\hat{\mathbf{P}}$ such that $\hat{\mathbf{P}}$ holds the low-rank assumption. Hence, $\varepsilon$ is assumed to be known.
-    \end{exampleblock}
-\end{frame}
-
-\begin{frame}{A Quantum Recommendation System}
-    \begin{itemize}
-        \item Introduced in 2016\footcite{QRS}\pause
-        \item Offers an exponential speed-up regarding to classical algorithms at that time\pause
-        \item \textcolor<4>{red}{No practical implementation proposed}\pause\pause
-    \end{itemize}
+    Solved by \citeauthor{QRS}\only<3->{\textcolor{red}{\ without practical implementation proposed}}.\pause\pause
     
     \begin{block}{Problem statement}
         How does the real-world implementation of the Quantum Recommendation System algorithm differs from its theoretic implementation?
     \end{block}
 \end{frame}
+
+\AtBeginSection[]
+  {
+     \begin{frame}<beamer>
+     \frametitle{Plan}
+     \tableofcontents[currentsection]
+     \end{frame}
+  }
 
 \section{Quantum Computing}
 \subsection{Classical computing parallel}
@@ -169,9 +157,9 @@
                 \centering
                 \begin{quantikz}
                     \qw & \ctrl{1} & \qw\\
-                    \qw & \gate{\mathbf{Z}} & \qw
+                    \qw & \gate{\mathbf{U}} & \qw
                 \end{quantikz}
-                \caption{The $\mathsf{C}-\mathbf{Z}$ gate}
+                \caption{A controlled gate}
             \end{subfigure}\pause
             \begin{subfigure}[b]{.3\textwidth}
                 \centering
@@ -193,9 +181,7 @@
         
         \[\ket{q}=\begin{pmatrix}\alpha\\\beta\end{pmatrix}\pause=\alpha\,\begin{pmatrix}1\\0\end{pmatrix} + \beta\,\begin{pmatrix}0\\1\end{pmatrix}\pause=\alpha\,\ket{0}+\beta\,\ket{1}.\]
         
-        \pause A qubits-string is called a \textbf{quantum register}.\pause\ It is mathematically described as the tensor product of these qubits, that is:
-        
-        \[\ket{q_1}\,\ket{q_2}\,\cdots\,\ket{q_n}=\bigotimes_{j=1}^n\ket{q_k}\,.\]
+        \pause A qubits-string is called a \textbf{quantum register}.
     \end{block}
 \end{frame}
 
@@ -269,7 +255,7 @@
     \begin{block}{Loading a vector as a quantum state}
         Let \(\mathbf{x}\in\mathbf{R}^n\) be a normalized vector.\pause Then, its associated quantum state is:
         
-        \[\ket{x}=\sum_{j\in\{0\,;\,1\}^{\left\lceil\log_2(n)\right\rceil}}\mathbf{x}_j\,\ket{q}\,.\]\pause
+        \[\ket{x}=\sum_{j\in\{0\,;\,1\}^{\left\lceil\log_2(n)\right\rceil}}\mathbf{x}_j\,\ket{j}\,.\]\pause
         
         Loading $\mathbf{x}$ means creating \ket{x} from $\ket{0}^{\otimes\left\lceil\log_2(n)\right\rceil}$ with a polylogarithmic number of gates\footnotemark.
     \end{block}\only<3->{\footcitetext{Prakash}}
@@ -384,28 +370,113 @@
 \end{frame}
 
 \begin{frame}{Converting a $z$-rotation to a $y$-rotation}
-    \only<2-3>{Rotate the sphere}
-    
     \begin{figure}[ht]
         \centering
         \begin{blochsphere}[ball=3d,opacity=0.1, radius=1.5cm, axisarrow=->, statecolor=red, statewidth=1.2pt,]
             \drawBallGrid[style={opacity=1,ultra thin}]{30}{30}
             \drawAxis[scale=1.2]{0}{0}
             \drawAxis[scale=1.8]{90}{90}
-            \drawAxis[scale=1.4]{90}{0}
+            \only<1-2>{\drawAxis[scale=1.4]{90}{0}}
             \labelLatLon{z}{90}{0};
             \labelLatLon{y}{0}{0};
+            \labelLatLon{newy}{180}{0};
             \labelLatLon{x}{0}{90};
             \labelLatLon{1}{-90}{90};
             \node[above,{shift=(0,0.4,0)}] at (z) {$z$};
             \node[above,{shift=(0.8,0,0)}] at (y) {$y$};
             \node[above,{shift=(0,0,1.8)}] at (x) {$x$};
-            \drawRotationRight[style={red}]{90}{0}{40}{30}
+            \drawRotationRight[style={blue}]{90}{0}{40}{90}
             \tdplotsetmaincoords{105}{-30}
+            \drawStatePolar{stateinit}{60}{15}
             \begin{scope}[tdplot_main_coords,canvas is xz plane at y=0]
-            \only<2>{\draw[blue, <-, line width=.25mm](90:2.5) arc(90:0:2.5);}
+            \only<2>{\draw[blue, <-, line width=.25mm](90:3) arc(90:0:3);}
             \end{scope}
         \end{blochsphere}
+        \caption{An exemple of a transformation of a $y$-rotation into a $z$-rotation}
+    \end{figure}
+\end{frame}
+
+\begin{frame}{Converting a $z$-rotation to a $y$-rotation}
+    \begin{figure}[ht]
+        \centering
+        \begin{animateinline}[autoplay, controls]{24}
+            \multiframe{31}{iAngle=0+3}{
+                \begin{blochsphere}[ball=3d,opacity=0.1, radius=1.5cm, axisarrow=->, statecolor=red, statewidth=1.2pt,]
+                    \drawBallGrid[style={opacity=1,ultra thin}]{30}{30}
+                    \drawAxis[scale=1.2]{0}{0}
+                    \drawAxis[scale=1.2]{90}{90}
+                    \drawAxis[scale=1.2]{90}{0}
+                    \drawAxis[scale=1.2,style={blue}]{-\iAngle}{0}
+                    \drawAxis[scale=1.2,style={blue}]{90+\iAngle}{0}
+                    \labelLatLon{z}{90}{0};
+                    \labelLatLon{y}{0}{0};
+                    \labelLatLon{newy}{180}{0};
+                    \labelLatLon{x}{0}{90};
+                    \labelLatLon{1}{-90}{90};
+                    \node[above,{shift=(0,0.4,0)}] at (z) {$z$};
+                    \node[above,{shift=(0.8,0,0)}] at (y) {$y$};
+                    \node[above,{shift=(0,0,1.8)}] at (x) {$x$};
+                    \drawRotationLeft[style={blue}]{90-\iAngle}{0}{40}{90}
+                    \drawStatePolar{state}{60+\iAngle}{15}
+                \end{blochsphere}
+            }
+        \end{animateinline}
+        \caption{An exemple of a transformation of a $y$-rotation into a $z$-rotation}
+    \end{figure}
+\end{frame}
+
+\begin{frame}{Converting a $z$-rotation to a $y$-rotation}
+    \begin{figure}[ht]
+        \centering
+        \begin{animateinline}[autoplay, controls]{24}
+            \multiframe{31}{iAngle=0+3}{
+                \begin{blochsphere}[ball=3d,opacity=0.1, radius=1.5cm, axisarrow=->, statecolor=red, statewidth=1.2pt,]
+                    \drawBallGrid[style={opacity=1,ultra thin}]{30}{30}
+                    \drawAxis[scale=1.2]{0}{0}
+                    \drawAxis[scale=1.2]{90}{90}
+                    \drawAxis[scale=1.2]{90}{0}
+                    \labelLatLon{z}{90}{0};
+                    \labelLatLon{y}{0}{0};
+                    \labelLatLon{newy}{180}{0};
+                    \labelLatLon{x}{0}{90};
+                    \labelLatLon{1}{-90}{90};
+                    \node[above,{shift=(0,0.4,0)}] at (z) {$z$};
+                    \node[above,{shift=(0.8,0,0)}] at (y) {$y$};
+                    \node[above,{shift=(0,0,1.8)}] at (x) {$x$};
+                    \drawRotationLeft[style={blue}]{0}{0}{40}{90}
+                    \drawStatePolar{state}{-30}{15+\iAngle}
+                \end{blochsphere}
+            }
+        \end{animateinline}
+        \caption{An exemple of a transformation of a $y$-rotation into a $z$-rotation}
+    \end{figure}
+\end{frame}
+
+\begin{frame}{Converting a $z$-rotation to a $y$-rotation}
+    \begin{figure}[ht]
+        \centering
+        \begin{animateinline}[autoplay, controls]{24}
+            \multiframe{31}{iAngle=0+3}{
+                \begin{blochsphere}[ball=3d,opacity=0.1, radius=1.5cm, axisarrow=->, statecolor=red, statewidth=1.2pt,]
+                    \drawBallGrid[style={opacity=1,ultra thin}]{30}{30}
+                    \drawAxis[scale=1.2]{0}{0}
+                    \drawAxis[scale=1.2]{90}{90}
+                    \drawAxis[scale=1.2]{90}{0}
+                    \drawAxis[scale=1.2,style={blue}]{\iAngle}{0}
+                    \drawAxis[scale=1.2,style={blue}]{-90-\iAngle}{0}
+                    \labelLatLon{z}{90}{0};
+                    \labelLatLon{y}{0}{0};
+                    \labelLatLon{newy}{180}{0};
+                    \labelLatLon{x}{0}{90};
+                    \labelLatLon{1}{-90}{90};
+                    \node[above,{shift=(0,0.4,0)}] at (z) {$z$};
+                    \node[above,{shift=(0.8,0,0)}] at (y) {$y$};
+                    \node[above,{shift=(0,0,1.8)}] at (x) {$x$};
+                    \drawRotationLeft[style={blue}]{\iAngle}{0}{40}{90}
+                    \drawStatePolar{state}{-30+\iAngle}{105}
+                \end{blochsphere}
+            }
+        \end{animateinline}
         \caption{An exemple of a transformation of a $y$-rotation into a $z$-rotation}
     \end{figure}
 \end{frame}
@@ -414,7 +485,7 @@
 
 \begin{frame}{Errata}
     \begin{itemize}
-        \item  Patate
+        \item It \textbf{is} possible to apply QPE without measuring\pause\ (the error analysis is complex though)
     \end{itemize}
 
 \end{frame}
@@ -423,7 +494,8 @@
 
 \begin{frame}{Conclusion}
     \begin{itemize}
-        \item  Patate
+        \item QPE, strings comparison\pause
+        \item Difference between real-world implementation and theoretic implementation\pause\ (dequantized algorithms)
     \end{itemize}
 
 \end{frame}
