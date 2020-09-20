@@ -13,7 +13,7 @@ QRAM is a quantum memory storage structure that allows to create a quantum state
 
 ### Separating quantum states according to a threshold
 
-Given <img src="https://render.githubusercontent.com/render/math?math=\sigma\in\mathbf{R}">, we want to design efficiently the gate <img src="https://render.githubusercontent.com/render/math?math=\mathbf{T}_{\sigma}"> such that <img src="https://render.githubusercontent.com/render/math?math=\mathbf{T}_{\sigma}|t\rangle|0\rangle=\begin{cases}|t\rangle|0\rangle&\text{if }t<\sigma\\|t\rangle|1\rangle&\text{otherwise}\end{cases}">. In order to do this, we design an algorithm that allows to compare a quantum state and a real number efficiently.
+Given <img src="https://render.githubusercontent.com/render/math?math=\sigma\in\mathbf{R}">, we want to design efficiently the gate <img src="https://render.githubusercontent.com/render/math?math=\mathbf{T}_{\sigma}"> such that <img src="https://render.githubusercontent.com/render/math?math=\mathbf{T}_{\sigma}|t\rangle|0\rangle=\begin{cases}|t\rangle|0\rangle%26\text{if }t<\sigma\\|t\rangle|1\rangle%26\text{otherwise}\end{cases}">. In order to do this, we design an algorithm that allows to compare a quantum state and a real number efficiently.
 
 ## Installation
 
